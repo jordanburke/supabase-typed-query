@@ -1,6 +1,6 @@
 {
   "name": "supabase-typed-query",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "Type-safe query builder and entity pattern for Supabase with TypeScript",
   "type": "module",
   "main": "./dist/index.js",
@@ -72,30 +72,30 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
-    "@eslint/js": "^9.39.0",
-    "@supabase/supabase-js": "^2.78.0",
-    "@types/node": "^22.18.13",
-    "@typescript-eslint/eslint-plugin": "^8.46.2",
-    "@typescript-eslint/parser": "^8.46.2",
+    "@eslint/js": "^9.39.1",
+    "@supabase/supabase-js": "^2.84.0",
+    "@types/node": "^22.19.1",
+    "@typescript-eslint/eslint-plugin": "^8.47.0",
+    "@typescript-eslint/parser": "^8.47.0",
     "@vitest/coverage-v8": "4.0.4",
     "dotenv": "^17.2.3",
-    "eslint": "^9.39.0",
+    "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-functional": "^9.0.2",
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-simple-import-sort": "^12.1.1",
-    "functype": "^0.17.0",
+    "functype": "^0.18.0",
     "globals": "^16.5.0",
     "prettier": "^3.6.2",
     "typescript": "^5.9.3",
-    "vite": "^7.1.12",
+    "vite": "^7.2.4",
     "vite-plugin-dts": "^4.5.4",
-    "vitest": "^4.0.6"
+    "vitest": "^4.0.12"
   },
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "pnpm@10.20.0+sha512.cf9998222162dd85864d0a8102e7892e7ba4ceadebbf5a31f9c2fce48dfce317a9c53b9f6464d1ef9042cba2e02ae02a9f7c143a2b438cd93c91840f0192b9dd",
+  "packageManager": "pnpm@10.23.0+sha512.21c4e5698002ade97e4efe8b8b4a89a8de3c85a37919f957e7a0f30f38fbc5bbdd05980ffe29179b2fb6e6e691242e098d945d1601772cad0fef5fb6411e2a4b",
   "dependencies": {
     "eslint-config-functype": "^1.3.0"
   }
