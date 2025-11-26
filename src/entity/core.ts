@@ -132,19 +132,19 @@ export function createUpdateItemMutation<T extends TableNames>(
 }
 
 /**
- * Creates an updateItems mutation
+ * Creates an updateItems mutation (Prisma-style: update all matching rows with same data)
  */
 export function createUpdateItemsMutation<T extends TableNames>(
   client: SupabaseClientType,
   name: T,
-  items: TableUpdate<T>[],
-  identity: (keyof TableRow<T> & string) | (keyof TableRow<T> & string)[],
-  where: WhereConditions<TableRow<T>> | undefined,
+  data: TableUpdate<T>,
+  where: WhereConditions<TableRow<T>>,
   is: IsParams<TableRow<T>>["is"],
   wherein: WhereinParams<TableRow<T>>["wherein"],
 ): MutationMultiExecution<TableRow<T>> {
+  // Use updateEntities with single-item array - updates all matching rows with same data
   return MultiMutationQuery(
-    updateEntities(client, name, items, identity, where, is, wherein) as FPromise<TaskOutcome<List<TableRow<T>>>>,
+    updateEntities(client, name, [data], undefined, where, is, wherein) as FPromise<TaskOutcome<List<TableRow<T>>>>,
   )
 }
 
@@ -214,66 +214,48 @@ export function makePartitionedGetItems<T extends TableNames, K extends Partitio
 }
 
 /**
- * Creates updateItem method for Entity (no partition)
+ * Creates updateItem method for Entity (no partition) - Prisma-style { where, data }
  */
 export function makeUpdateItem<T extends TableNames>(client: SupabaseClientType, name: T) {
-  return function updateItem({ id, item, where, is, wherein }: UpdateItemParams<T, TableRow<T>>) {
-    const whereConditions = { ...where, id } as WhereConditions<TableRow<T>>
-    return createUpdateItemMutation(client, name, item, whereConditions, is, wherein)
+  return function updateItem({ where, data, is, wherein }: UpdateItemParams<T, TableRow<T>>) {
+    return createUpdateItemMutation(client, name, data, where as WhereConditions<TableRow<T>>, is, wherein)
   }
 }
 
 /**
- * Creates updateItem method for PartitionedEntity
+ * Creates updateItem method for PartitionedEntity - Prisma-style { where, data }
  */
 export function makePartitionedUpdateItem<T extends TableNames, K extends PartitionKey>(
   client: SupabaseClientType,
   name: T,
   partitionField: string,
 ) {
-  return function updateItem(partitionKey: K, { id, item, where, is, wherein }: UpdateItemParams<T, TableRow<T>>) {
-    const whereConditions = buildWhereWithPartitionAndId(partitionField, partitionKey, id, where)
-    return createUpdateItemMutation(client, name, item, whereConditions as WhereConditions<TableRow<T>>, is, wherein)
+  return function updateItem(partitionKey: K, { where, data, is, wherein }: UpdateItemParams<T, TableRow<T>>) {
+    const whereConditions = buildWhereWithPartition(partitionField, partitionKey, where)
+    return createUpdateItemMutation(client, name, data, whereConditions as WhereConditions<TableRow<T>>, is, wherein)
   }
 }
 
 /**
- * Creates updateItems method for Entity (no partition)
+ * Creates updateItems method for Entity (no partition) - Prisma-style { where, data }
  */
 export function makeUpdateItems<T extends TableNames>(client: SupabaseClientType, name: T) {
-  return function updateItems({
-    items,
-    identity = "id" as keyof TableRow<T> & string,
-    where,
-    is,
-    wherein,
-  }: UpdateItemsParams<T, TableRow<T>>) {
-    return createUpdateItemsMutation(client, name, items, identity, where as WhereConditions<TableRow<T>>, is, wherein)
+  return function updateItems({ where, data, is, wherein }: UpdateItemsParams<T, TableRow<T>>) {
+    return createUpdateItemsMutation(client, name, data, where as WhereConditions<TableRow<T>>, is, wherein)
   }
 }
 
 /**
- * Creates updateItems method for PartitionedEntity
+ * Creates updateItems method for PartitionedEntity - Prisma-style { where, data }
  */
 export function makePartitionedUpdateItems<T extends TableNames, K extends PartitionKey>(
   client: SupabaseClientType,
   name: T,
   partitionField: string,
 ) {
-  return function updateItems(
-    partitionKey: K,
-    { items, identity = "id" as keyof TableRow<T> & string, where, is, wherein }: UpdateItemsParams<T, TableRow<T>>,
-  ) {
+  return function updateItems(partitionKey: K, { where, data, is, wherein }: UpdateItemsParams<T, TableRow<T>>) {
     const whereConditions = buildWhereWithPartition(partitionField, partitionKey, where)
-    return createUpdateItemsMutation(
-      client,
-      name,
-      items,
-      identity,
-      whereConditions as WhereConditions<TableRow<T>>,
-      is,
-      wherein,
-    )
+    return createUpdateItemsMutation(client, name, data, whereConditions as WhereConditions<TableRow<T>>, is, wherein)
   }
 }
 

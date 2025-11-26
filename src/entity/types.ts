@@ -88,17 +88,26 @@ export type AddItemsParams<T extends TableNames> = {
   items: TableInsert<T>[]
 }
 
-export type UpdateItemParams<T extends TableNames, Row extends object = EmptyObject> = IdParam & {
-  item: TableUpdate<T>
-} & WhereParams<Row> &
-  IsParams<Row> &
+/**
+ * Prisma-style update params for single item: { where, data }
+ */
+export type UpdateItemParams<T extends TableNames, Row extends object = EmptyObject> = {
+  /** Conditions to match the item to update */
+  where: WhereConditions<Row>
+  /** The data to update */
+  data: TableUpdate<T>
+} & IsParams<Row> &
   WhereinParams<Row>
 
+/**
+ * Prisma-style update params for multiple items: { where, data }
+ */
 export type UpdateItemsParams<T extends TableNames, Row extends object = EmptyObject> = {
-  items: TableUpdate<T>[]
-  identity?: (keyof Row & string) | (keyof Row & string)[]
-} & WhereParams<Row> &
-  IsParams<Row> &
+  /** Conditions to match items to update */
+  where: WhereConditions<Row>
+  /** The data to update on all matched items */
+  data: TableUpdate<T>
+} & IsParams<Row> &
   WhereinParams<Row>
 
 // =============================================================================

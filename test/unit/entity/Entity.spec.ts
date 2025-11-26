@@ -173,13 +173,13 @@ describe("Entity", () => {
   })
 
   describe("updateItem()", () => {
-    it("should return a mutation execution interface", () => {
+    it("should return a mutation execution interface with Prisma-style { where, data }", () => {
       const mockClient = createMockSupabaseClient()
       const UserEntity = Entity(mockClient, "users", { softDelete: true })
 
       const result = UserEntity.updateItem({
-        id: "user-123",
-        item: { name: "Updated Name" },
+        where: { id: "user-123" },
+        data: { name: "Updated Name" },
       })
 
       expect(result).toBeDefined()
@@ -189,14 +189,26 @@ describe("Entity", () => {
       expect(typeof result.executeOrThrow).toBe("function")
     })
 
-    it("should accept where conditions", () => {
+    it("should accept multiple where conditions", () => {
       const mockClient = createMockSupabaseClient()
       const UserEntity = Entity(mockClient, "users", { softDelete: true })
 
       const result = UserEntity.updateItem({
-        id: "user-123",
-        item: { name: "Updated" },
-        where: { active: true },
+        where: { id: "user-123", active: true },
+        data: { name: "Updated" },
+      })
+
+      expect(result).toBeDefined()
+    })
+
+    it("should accept is conditions", () => {
+      const mockClient = createMockSupabaseClient()
+      const UserEntity = Entity(mockClient, "users", { softDelete: true })
+
+      const result = UserEntity.updateItem({
+        where: { id: "user-123" },
+        data: { name: "Updated" },
+        is: { deleted: null },
       })
 
       expect(result).toBeDefined()
@@ -204,12 +216,13 @@ describe("Entity", () => {
   })
 
   describe("updateItems()", () => {
-    it("should return a mutation multi execution interface", () => {
+    it("should return a mutation multi execution interface with Prisma-style { where, data }", () => {
       const mockClient = createMockSupabaseClient()
       const UserEntity = Entity(mockClient, "users", { softDelete: true })
 
       const result = UserEntity.updateItems({
-        items: [{ id: "1", name: "Updated 1" }],
+        where: { role: "admin" },
+        data: { active: true },
       })
 
       expect(result).toBeDefined()
@@ -219,25 +232,27 @@ describe("Entity", () => {
       expect(typeof result.executeOrThrow).toBe("function")
     })
 
-    it("should accept identity parameter", () => {
+    it("should accept wherein conditions", () => {
       const mockClient = createMockSupabaseClient()
       const UserEntity = Entity(mockClient, "users", { softDelete: true })
 
       const result = UserEntity.updateItems({
-        items: [{ email: "user1@example.com", name: "Updated" }],
-        identity: "email",
+        where: { status: "pending" },
+        data: { status: "approved" },
+        wherein: { id: ["id1", "id2", "id3"] },
       })
 
       expect(result).toBeDefined()
     })
 
-    it("should accept composite identity", () => {
+    it("should accept is conditions", () => {
       const mockClient = createMockSupabaseClient()
       const UserEntity = Entity(mockClient, "users", { softDelete: true })
 
       const result = UserEntity.updateItems({
-        items: [{ id: "1", name: "Updated" }],
-        identity: ["id", "name"],
+        where: { role: "user" },
+        data: { verified: true },
+        is: { deleted: null },
       })
 
       expect(result).toBeDefined()
