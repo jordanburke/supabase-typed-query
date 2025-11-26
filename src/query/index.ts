@@ -55,7 +55,8 @@ export const getEntity = <T extends TableNames>(
 ): FPromise<TaskOutcome<TableRow<T>>> =>
   wrapAsync(async () => {
     try {
-      const baseQuery = client.from(table).select("*").match(where)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const baseQuery = (client.from(table) as any).select("*").match(where)
 
       const queryWithIs = is
         ? List(Object.entries(is)).foldLeft(baseQuery)((query, [column, value]) =>
@@ -99,7 +100,8 @@ export const getEntities = <T extends TableNames>(
 ): FPromise<TaskOutcome<List<TableRow<T>>>> =>
   wrapAsync(async () => {
     try {
-      const baseQuery = client.from(table).select("*").match(where)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const baseQuery = (client.from(table) as any).select("*").match(where)
 
       const queryWithIn = wherein
         ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
@@ -142,10 +144,8 @@ export const addEntities = <T extends TableNames>(
 ): FPromise<TaskOutcome<List<TableRow<T>>>> =>
   wrapAsync(async () => {
     try {
-      const { data, error } = await client
-        .from(table)
-        .insert(entities as never)
-        .select()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (client.from(table) as any).insert(entities as never).select()
 
       if (error) {
         return Err<List<TableRow<T>>>(toError(error))
@@ -178,10 +178,8 @@ export const updateEntity = <T extends TableNames>(
 ): FPromise<TaskOutcome<TableRow<T>>> =>
   wrapAsync(async () => {
     try {
-      const baseQuery = client
-        .from(table)
-        .update(entities as never)
-        .match(where)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const baseQuery = (client.from(table) as any).update(entities as never).match(where)
 
       const queryWithIn = wherein
         ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
@@ -232,10 +230,8 @@ export const updateEntities = <T extends TableNames>(
     try {
       const onConflict = Array.isArray(identity) ? identity.join(",") : identity
 
-      const baseQuery = client
-        .from(table)
-        .upsert(entities as never, { onConflict })
-        .match(where ?? {})
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const baseQuery = (client.from(table) as any).upsert(entities as never, { onConflict }).match(where ?? {})
 
       const queryWithIn = wherein
         ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>

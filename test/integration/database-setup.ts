@@ -66,7 +66,10 @@ export class DatabaseSetup {
 
     try {
       // Clean up test users (prefix: test_)
-      const { error: usersError } = await this.client.from("users").delete().ilike("email", "test_%@example.com")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: usersError } = await (this.client.from("users") as any)
+        .delete()
+        .ilike("email", "test_%@example.com")
 
       if (usersError && (usersError as { code?: string }).code !== "PGRST116") {
         // PGRST116 = no rows to delete (not an error)
@@ -74,14 +77,16 @@ export class DatabaseSetup {
       }
 
       // Clean up test posts (prefix: test_)
-      const { error: postsError } = await this.client.from("posts").delete().ilike("title", "test_%")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: postsError } = await (this.client.from("posts") as any).delete().ilike("title", "test_%")
 
       if (postsError && (postsError as { code?: string }).code !== "PGRST116") {
         console.warn("Warning: Could not clean posts:", (postsError as { message?: string }).message)
       }
 
       // Clean up test comments (prefix: test_)
-      const { error: commentsError } = await this.client.from("comments").delete().ilike("text", "test_%")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: commentsError } = await (this.client.from("comments") as any).delete().ilike("text", "test_%")
 
       if (commentsError && (commentsError as { code?: string }).code !== "PGRST116") {
         console.warn("Warning: Could not clean comments:", (commentsError as { message?: string }).message)
@@ -101,8 +106,8 @@ export class DatabaseSetup {
     }
 
     // Create test user
-    const { data: users, error: userError } = await this.client
-      .from("users")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: users, error: userError } = await (this.client.from("users") as any)
       .insert({
         name: "Test User",
         email: "test_user@example.com",
@@ -119,8 +124,8 @@ export class DatabaseSetup {
     const testUserId = (users[0] as { id: string }).id
 
     // Create test post
-    const { data: posts, error: postError } = await this.client
-      .from("posts")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: posts, error: postError } = await (this.client.from("posts") as any)
       .insert({
         title: "Test Post",
         content: "Test content for integration testing",
@@ -137,8 +142,8 @@ export class DatabaseSetup {
     const testPostId = (posts[0] as { id: string }).id
 
     // Create test comment
-    const { data: comments, error: commentError } = await this.client
-      .from("comments")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: comments, error: commentError } = await (this.client.from("comments") as any)
       .insert({
         post_id: testPostId,
         user_id: testUserId,
@@ -175,7 +180,8 @@ export class DatabaseSetup {
       role: i % 3 === 0 ? "admin" : i % 3 === 1 ? "moderator" : "user",
     }))
 
-    const { data: users, error } = await this.client.from("users").insert(usersToCreate).select()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: users, error } = await (this.client.from("users") as any).insert(usersToCreate).select()
 
     if (error || !users || !Array.isArray(users)) {
       throw new Error(`Failed to create test users: ${(error as { message?: string })?.message ?? "Unknown error"}`)
@@ -201,7 +207,8 @@ export class DatabaseSetup {
       published_at: i % 3 === 1 ? new Date().toISOString() : null,
     }))
 
-    const { data: posts, error } = await this.client.from("posts").insert(postsToCreate).select()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: posts, error } = await (this.client.from("posts") as any).insert(postsToCreate).select()
 
     if (error || !posts || !Array.isArray(posts)) {
       throw new Error(`Failed to create test posts: ${(error as { message?: string })?.message ?? "Unknown error"}`)
@@ -219,8 +226,8 @@ export class DatabaseSetup {
     }
 
     // Create active user
-    const { data: activeUsers, error: activeError } = await this.client
-      .from("users")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: activeUsers, error: activeError } = await (this.client.from("users") as any)
       .insert({
         name: "Test Active User",
         email: "test_active@example.com",
@@ -238,8 +245,8 @@ export class DatabaseSetup {
     }
 
     // Create soft-deleted user
-    const { data: deletedUsers, error: deletedError } = await this.client
-      .from("users")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: deletedUsers, error: deletedError } = await (this.client.from("users") as any)
       .insert({
         name: "Test Deleted User",
         email: "test_deleted@example.com",
@@ -290,7 +297,8 @@ export class DatabaseSetup {
     try {
       // Test database connection with a simple query
       // Most Supabase projects won't have this table, so we just test the connection works
-      const { error } = await this.client.from("users").select("id").limit(1)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (this.client.from("users") as any).select("id").limit(1)
 
       if (error) {
         // If table doesn't exist (42P01), that's actually OK - connection works

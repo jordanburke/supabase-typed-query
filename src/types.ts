@@ -53,7 +53,11 @@ export interface QueryBuilder extends Promise<{ data: unknown; error: unknown }>
   order: (column: string, options?: { ascending?: boolean }) => QueryBuilder
 }
 
-// Supabase client type (simplified for open source)
+/**
+ * Supabase client type - accepts any client with a compatible from() method.
+ * Uses `unknown` return type to allow SupabaseClient<Database> from @supabase/supabase-js
+ * to be used directly without type casting.
+ */
 export interface SupabaseClientType {
-  from: (table: string) => QueryBuilder
+  from: (table: string) => unknown
 }
