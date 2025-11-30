@@ -132,3 +132,31 @@ The library is organized around two main APIs:
 - **Registry**: Public NPM registry (not GitHub packages)
 - **Access**: Public package, no scoped namespace
 - **Versioning**: Semantic versioning (semver)
+
+## Skills Documentation
+
+Claude Code skills are located in `.claude/skills/supabase-typed-query/`.
+
+### Updating Skills on API Changes
+
+**IMPORTANT**: When making changes to the public API, you MUST update the skills documentation:
+
+- `SKILL.md` - Main guide with API examples
+- `references/quick-reference.md` - Method signatures and types
+- `references/common-patterns.md` - Usage patterns
+
+**API changes that require skill updates:**
+
+- Adding/removing/renaming methods on `Query`, `MappedQuery`, `Entity`, or `PartitionedEntity`
+- Changing method signatures or return types
+- Adding/removing comparison operators
+- Modifying error handling patterns
+- Changes to `TaskOutcome` or `OrThrow` behavior
+- New configuration options for Entity/PartitionedEntity
+
+**Checklist for API changes:**
+
+1. Update the relevant skill files to reflect the new API
+2. Ensure code examples compile and are accurate
+3. Update the quick-reference tables if method signatures changed
+4. Add new patterns to common-patterns.md if applicable
