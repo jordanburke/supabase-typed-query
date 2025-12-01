@@ -1,0 +1,20 @@
+{
+  "name": "supabase-typed-query-skills",
+  "owner": {
+    "name": "Jordan Burke",
+    "email": "jordan.burke@gmail.com"
+  },
+  "metadata": {
+    "description": "Skills for working with supabase-typed-query - type-safe Supabase queries with functional patterns",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "supabase-typed-query",
+      "description": "Help developers use supabase-typed-query for type-safe Supabase queries - Query API, Entity patterns, error handling",
+      "source": "./",
+      "strict": false,
+      "skills": ["./.claude/skills/supabase-typed-query"]
+    }
+  ]
+}
