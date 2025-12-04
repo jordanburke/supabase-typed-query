@@ -37,11 +37,15 @@ export type {
 } from "./query"
 export {
   addEntities,
+  deleteEntities,
+  deleteEntity,
   getEntities,
   getEntity,
   isMappedQuery,
   isQuery,
   query,
+  softDeleteEntities,
+  softDeleteEntity,
   updateEntity,
   upsertEntities,
 } from "./query"
@@ -49,6 +53,8 @@ export {
 // Entity exports
 export type {
   AddItemsParams,
+  DeleteItemParams,
+  DeleteItemsParams,
   EntityConfig,
   EntityType,
   GetItemParams,

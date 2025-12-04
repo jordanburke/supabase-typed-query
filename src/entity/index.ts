@@ -1,6 +1,8 @@
 // Entity exports
 export type {
   AddItemsParams,
+  DeleteItemParams,
+  DeleteItemsParams,
   EntityConfig,
   EntityType,
   GetItemParams,
