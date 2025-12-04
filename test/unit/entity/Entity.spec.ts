@@ -336,4 +336,149 @@ describe("Entity", () => {
       expect(typeof query.onlyDeleted).toBe("function")
     })
   })
+
+  describe("deleteItem()", () => {
+    it("should return a mutation execution interface", () => {
+      const mockClient = createMockSupabaseClient()
+      const UserEntity = Entity(mockClient, "users", { softDelete: false })
+
+      const result = UserEntity.deleteItem({
+        where: { id: "user-123" },
+      })
+
+      expect(result).toBeDefined()
+      expect(typeof result.one).toBe("function")
+      expect(typeof result.oneOrThrow).toBe("function")
+      expect(typeof result.execute).toBe("function")
+      expect(typeof result.executeOrThrow).toBe("function")
+    })
+
+    it("should call .delete() when softDelete is false (hard delete)", async () => {
+      const deleteSpy = vi.fn().mockReturnThis()
+      const matchSpy = vi.fn().mockReturnThis()
+      const selectSpy = vi.fn().mockReturnThis()
+      const singleSpy = vi.fn().mockResolvedValue({
+        data: { id: "user-123", name: "Deleted User" },
+        error: null,
+      })
+
+      const mockClient = {
+        from: vi.fn().mockReturnValue({
+          delete: deleteSpy,
+          match: matchSpy,
+          select: selectSpy,
+          single: singleSpy,
+        }),
+      } as unknown as SupabaseClientType
+
+      const UserEntity = Entity(mockClient, "users", { softDelete: false })
+
+      await UserEntity.deleteItem({ where: { id: "user-123" } }).execute()
+
+      expect(mockClient.from).toHaveBeenCalledWith("users")
+      expect(deleteSpy).toHaveBeenCalled()
+    })
+
+    it("should call .update() when softDelete is true (soft delete)", async () => {
+      const updateSpy = vi.fn().mockReturnThis()
+      const matchSpy = vi.fn().mockReturnThis()
+      const selectSpy = vi.fn().mockReturnThis()
+      const singleSpy = vi.fn().mockResolvedValue({
+        data: { id: "user-123", name: "Soft Deleted User", deleted: "2024-01-01T00:00:00.000Z" },
+        error: null,
+      })
+
+      const mockClient = {
+        from: vi.fn().mockReturnValue({
+          update: updateSpy,
+          match: matchSpy,
+          select: selectSpy,
+          single: singleSpy,
+        }),
+      } as unknown as SupabaseClientType
+
+      const UserEntity = Entity(mockClient, "users", { softDelete: true })
+
+      await UserEntity.deleteItem({ where: { id: "user-123" } }).execute()
+
+      expect(mockClient.from).toHaveBeenCalledWith("users")
+      expect(updateSpy).toHaveBeenCalled()
+      // Verify it was called with a deleted timestamp
+      const updateArg = updateSpy.mock.calls[0][0]
+      expect(updateArg).toHaveProperty("deleted")
+      expect(typeof updateArg.deleted).toBe("string")
+    })
+  })
+
+  describe("deleteItems()", () => {
+    it("should return a mutation multi execution interface", () => {
+      const mockClient = createMockSupabaseClient()
+      const UserEntity = Entity(mockClient, "users", { softDelete: false })
+
+      const result = UserEntity.deleteItems({
+        where: { status: "inactive" },
+      })
+
+      expect(result).toBeDefined()
+      expect(typeof result.many).toBe("function")
+      expect(typeof result.manyOrThrow).toBe("function")
+      expect(typeof result.execute).toBe("function")
+      expect(typeof result.executeOrThrow).toBe("function")
+    })
+
+    it("should call .delete() when softDelete is false (hard delete)", async () => {
+      const deleteSpy = vi.fn().mockReturnThis()
+      const matchSpy = vi.fn().mockReturnThis()
+      const selectSpy = vi.fn().mockResolvedValue({
+        data: [{ id: "1" }, { id: "2" }],
+        error: null,
+      })
+
+      const mockClient = {
+        from: vi.fn().mockReturnValue({
+          delete: deleteSpy,
+          match: matchSpy,
+          select: selectSpy,
+        }),
+      } as unknown as SupabaseClientType
+
+      const UserEntity = Entity(mockClient, "users", { softDelete: false })
+
+      await UserEntity.deleteItems({ where: { status: "inactive" } }).execute()
+
+      expect(mockClient.from).toHaveBeenCalledWith("users")
+      expect(deleteSpy).toHaveBeenCalled()
+    })
+
+    it("should call .update() when softDelete is true (soft delete)", async () => {
+      const updateSpy = vi.fn().mockReturnThis()
+      const matchSpy = vi.fn().mockReturnThis()
+      const selectSpy = vi.fn().mockResolvedValue({
+        data: [
+          { id: "1", deleted: "2024-01-01T00:00:00.000Z" },
+          { id: "2", deleted: "2024-01-01T00:00:00.000Z" },
+        ],
+        error: null,
+      })
+
+      const mockClient = {
+        from: vi.fn().mockReturnValue({
+          update: updateSpy,
+          match: matchSpy,
+          select: selectSpy,
+        }),
+      } as unknown as SupabaseClientType
+
+      const UserEntity = Entity(mockClient, "users", { softDelete: true })
+
+      await UserEntity.deleteItems({ where: { status: "inactive" } }).execute()
+
+      expect(mockClient.from).toHaveBeenCalledWith("users")
+      expect(updateSpy).toHaveBeenCalled()
+      // Verify it was called with a deleted timestamp
+      const updateArg = updateSpy.mock.calls[0][0]
+      expect(updateArg).toHaveProperty("deleted")
+      expect(typeof updateArg.deleted).toBe("string")
+    })
+  })
 })
