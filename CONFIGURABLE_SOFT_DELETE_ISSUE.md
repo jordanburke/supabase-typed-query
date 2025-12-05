@@ -28,7 +28,7 @@ Add a `softDeleteField` option to Entity/PartitionedEntity config:
 ```typescript
 const PostEntity = Entity<"posts", Database>(client, "posts", {
   softDelete: true,
-  softDeleteField: "deleted_at",  // defaults to "deleted"
+  softDeleteField: "deleted_at", // defaults to "deleted"
 })
 ```
 
