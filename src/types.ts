@@ -28,6 +28,10 @@ export interface SchemaDefinition {
  * Base schema interface that all databases must conform to.
  * Consumer-provided Database types must extend this interface.
  * Supports multiple schemas (public, custom schemas, etc.)
+ *
+ * Note: Supabase-generated Database types may include __InternalSupabase metadata.
+ * The utility types below use Omit to filter this out when accessing schemas,
+ * following the same pattern used by @supabase/supabase-js.
  */
 export interface DatabaseSchema {
   public: SchemaDefinition
@@ -60,10 +64,11 @@ export interface Database extends DatabaseSchema {
 // =============================================================================
 
 /**
- * Schema names for a given database.
+ * Schema names for a given database, excluding internal Supabase metadata.
+ * Uses Omit to filter out __InternalSupabase, matching @supabase/supabase-js pattern.
  * @typeParam DB - The database schema type (defaults to placeholder Database)
  */
-export type SchemaNames<DB extends DatabaseSchema = Database> = keyof DB & string
+export type SchemaNames<DB extends DatabaseSchema = Database> = keyof Omit<DB, "__InternalSupabase"> & string
 
 /**
  * Default schema name constant.
@@ -71,14 +76,20 @@ export type SchemaNames<DB extends DatabaseSchema = Database> = keyof DB & strin
 export const DEFAULT_SCHEMA = "public" as const
 
 /**
+ * Helper type to get a valid schema from DB, defaulting to "public"
+ */
+type ValidSchema<DB extends DatabaseSchema> = "public" extends SchemaNames<DB> ? "public" : SchemaNames<DB>
+
+/**
  * Table names for a given database schema.
  * @typeParam DB - The database schema type (defaults to placeholder Database)
  * @typeParam S - The schema name (defaults to "public")
  */
-export type TableNames<
-  DB extends DatabaseSchema = Database,
-  S extends SchemaNames<DB> = "public",
-> = keyof DB[S]["Tables"] & string
+export type TableNames<DB extends DatabaseSchema = Database, S extends SchemaNames<DB> = ValidSchema<DB>> = keyof Omit<
+  DB,
+  "__InternalSupabase"
+>[S]["Tables"] &
+  string
 
 /**
  * Row type for a given table in a database schema.
@@ -89,8 +100,8 @@ export type TableNames<
 export type TableRow<
   T extends TableNames<DB, S>,
   DB extends DatabaseSchema = Database,
-  S extends SchemaNames<DB> = "public",
-> = DB[S]["Tables"][T]["Row"]
+  S extends SchemaNames<DB> = ValidSchema<DB>,
+> = Omit<DB, "__InternalSupabase">[S]["Tables"][T]["Row"]
 
 /**
  * Insert type for a given table in a database schema.
@@ -101,8 +112,8 @@ export type TableRow<
 export type TableInsert<
   T extends TableNames<DB, S>,
   DB extends DatabaseSchema = Database,
-  S extends SchemaNames<DB> = "public",
-> = DB[S]["Tables"][T]["Insert"]
+  S extends SchemaNames<DB> = ValidSchema<DB>,
+> = Omit<DB, "__InternalSupabase">[S]["Tables"][T]["Insert"]
 
 /**
  * Update type for a given table in a database schema.
@@ -113,8 +124,8 @@ export type TableInsert<
 export type TableUpdate<
   T extends TableNames<DB, S>,
   DB extends DatabaseSchema = Database,
-  S extends SchemaNames<DB> = "public",
-> = DB[S]["Tables"][T]["Update"]
+  S extends SchemaNames<DB> = ValidSchema<DB>,
+> = Omit<DB, "__InternalSupabase">[S]["Tables"][T]["Update"]
 
 // =============================================================================
 // Utility Types

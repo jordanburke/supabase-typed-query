@@ -108,8 +108,13 @@ export default [
     },
   },
   {
-    // Override for test files
-    files: ["**/*.spec.ts", "**/*.test.ts"],
+    // Override for all test files (specs, helpers, setup)
+    files: ["test/**/*.ts"],
+    languageOptions: {
+      parserOptions: {
+        project: "./tsconfig.test.json",
+      },
+    },
     rules: {
       "functional/no-let": "off", // Allow let in test files for setup
     },
