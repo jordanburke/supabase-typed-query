@@ -29,13 +29,23 @@ export interface SchemaDefinition {
  * Consumer-provided Database types must extend this interface.
  * Supports multiple schemas (public, custom schemas, etc.)
  *
- * Note: Uses permissive index signature to accept Supabase's __InternalSupabase metadata.
- * Use CleanDatabase<DB> or Omit<DB, '__InternalSupabase'> when strict typing is needed.
+ * Note: No index signature - TypeScript's structural typing allows additional properties.
+ * This permits Supabase's __InternalSupabase while maintaining type safety for valid schemas.
  */
 export interface DatabaseSchema {
   public: SchemaDefinition
-  [schemaName: string]: SchemaDefinition
 }
+
+/**
+ * Extracts a valid schema from a database type.
+ * Returns the schema if it's a valid SchemaDefinition, otherwise never.
+ * This ensures type-safe access to schema properties.
+ */
+export type ValidSchema<DB extends DatabaseSchema, S extends string> = S extends keyof DB
+  ? DB[S] extends SchemaDefinition
+    ? DB[S]
+    : never
+  : never
 
 /**
  * Helper type to strip `__InternalSupabase` from Supabase-generated database types.
@@ -75,10 +85,14 @@ export interface Database extends DatabaseSchema {
 
 /**
  * Schema names for a given database.
- * Uses Omit pattern (same as Supabase's SupabaseClient) to exclude __InternalSupabase.
+ * Only includes keys whose values are valid SchemaDefinitions (have Tables property).
+ * This excludes __InternalSupabase by structure, not just by name - providing true type safety.
  * @typeParam DB - The database schema type (defaults to placeholder Database)
  */
-export type SchemaNames<DB extends DatabaseSchema = Database> = keyof TypedDatabase<DB> & string
+export type SchemaNames<DB extends DatabaseSchema = Database> = {
+  [K in keyof DB]: DB[K] extends SchemaDefinition ? K : never
+}[keyof DB] &
+  string
 
 /**
  * Default schema name constant.
@@ -87,16 +101,18 @@ export const DEFAULT_SCHEMA = "public" as const
 
 /**
  * Table names for a given database schema.
+ * Uses ValidSchema for type-safe access - only valid SchemaDefinitions can be accessed.
  * @typeParam DB - The database schema type (defaults to placeholder Database)
  * @typeParam S - The schema name (defaults to "public")
  */
 export type TableNames<
   DB extends DatabaseSchema = Database,
   S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
-> = keyof DB[S]["Tables"] & string
+> = keyof ValidSchema<DB, S>["Tables"] & string
 
 /**
  * Row type for a given table in a database schema.
+ * Uses ValidSchema for type-safe access.
  * @typeParam T - The table name
  * @typeParam DB - The database schema type (defaults to placeholder Database)
  * @typeParam S - The schema name (defaults to "public")
@@ -105,10 +121,11 @@ export type TableRow<
   T extends TableNames<DB, S>,
   DB extends DatabaseSchema = Database,
   S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
-> = DB[S]["Tables"][T]["Row"]
+> = ValidSchema<DB, S>["Tables"][T]["Row"]
 
 /**
  * Insert type for a given table in a database schema.
+ * Uses ValidSchema for type-safe access.
  * @typeParam T - The table name
  * @typeParam DB - The database schema type (defaults to placeholder Database)
  * @typeParam S - The schema name (defaults to "public")
@@ -117,10 +134,11 @@ export type TableInsert<
   T extends TableNames<DB, S>,
   DB extends DatabaseSchema = Database,
   S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
-> = DB[S]["Tables"][T]["Insert"]
+> = ValidSchema<DB, S>["Tables"][T]["Insert"]
 
 /**
  * Update type for a given table in a database schema.
+ * Uses ValidSchema for type-safe access.
  * @typeParam T - The table name
  * @typeParam DB - The database schema type (defaults to placeholder Database)
  * @typeParam S - The schema name (defaults to "public")
@@ -129,7 +147,7 @@ export type TableUpdate<
   T extends TableNames<DB, S>,
   DB extends DatabaseSchema = Database,
   S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
-> = DB[S]["Tables"][T]["Update"]
+> = ValidSchema<DB, S>["Tables"][T]["Update"]
 
 // =============================================================================
 // Utility Types
@@ -197,5 +215,6 @@ export interface SupabaseSchemaAccessor {
  */
 export interface SupabaseClientType<DB extends DatabaseSchema = Database> {
   from: (table: TableNames<DB>) => unknown
-  schema: (name: string) => SupabaseSchemaAccessor
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  schema: (name: any) => SupabaseSchemaAccessor
 }

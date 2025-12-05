@@ -9,11 +9,14 @@ export type {
   DatabaseSchema,
   EmptyObject,
   QueryBuilder,
+  SchemaNames,
   SupabaseClientType,
   TableInsert,
   TableNames,
   TableRow,
   TableUpdate,
+  TypedDatabase,
+  ValidSchema,
 } from "./types"
 
 // Query exports
