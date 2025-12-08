@@ -27,6 +27,7 @@ export type {
 export type {
   ComparisonOperators,
   EntityQuery,
+  EntityWhereConditions,
   ExecutableQuery,
   IsConditions,
   MappedQuery,

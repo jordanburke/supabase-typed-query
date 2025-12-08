@@ -11,6 +11,7 @@ import type {
   TypedRecord,
   WhereParams,
 } from "@/entity"
+import type { EntityWhereConditions, WhereConditions } from "@/query/Query"
 
 import type { Brand } from "functype"
 
@@ -157,5 +158,58 @@ describe("Entity Types", () => {
     expect(entityInterface).toBeDefined()
     expect(entityInterface.getItem).toBeDefined()
     expect(entityInterface.getItems).toBeDefined()
+  })
+
+  it("should differentiate EntityWhereConditions from WhereConditions", () => {
+    type TestRow = {
+      id: string
+      name: string
+      used_at: string | null
+      count: number
+    }
+
+    // EntityWhereConditions only allows direct values (no nested operators)
+    const entityWhere: EntityWhereConditions<TestRow> = {
+      id: "123",
+      name: "test",
+      used_at: null, // Direct null is allowed
+      count: 42,
+    }
+
+    // WhereConditions allows nested operators (for Query API)
+    const queryWhere: WhereConditions<TestRow> = {
+      id: "123",
+      name: { like: "%test%" }, // Nested operators allowed
+      used_at: { is: null }, // Nested is operator allowed
+      count: { gt: 10 }, // Nested comparison allowed
+    }
+
+    expect(entityWhere).toBeDefined()
+    expect(queryWhere).toBeDefined()
+
+    // EntityWhereConditions is a subset of WhereConditions
+    // So entityWhere can be assigned to WhereConditions
+    const assignable: WhereConditions<TestRow> = entityWhere
+    expect(assignable).toBeDefined()
+
+    // This test documents the intended behavior:
+    // - Entity API uses EntityWhereConditions (no nested operators)
+    // - Query API uses WhereConditions (nested operators allowed)
+    // - Use separate `is`, `wherein`, etc. params for Entity API
+  })
+
+  it("should allow null values in EntityWhereConditions", () => {
+    type TestRow = {
+      id: string
+      optional_field: string | null
+    }
+
+    // Direct null assignment is valid for nullable fields
+    const where: EntityWhereConditions<TestRow> = {
+      id: "123",
+      optional_field: null,
+    }
+
+    expect(where.optional_field).toBeNull()
   })
 })

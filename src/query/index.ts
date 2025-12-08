@@ -13,13 +13,14 @@ import { toError } from "@/utils/errors"
 import type { FPromise, TaskOutcome } from "functype"
 import { Err, List, Ok } from "functype"
 
-import type { Query, WhereConditions } from "./Query"
+import type { EntityWhereConditions, Query, WhereConditions } from "./Query"
 import { createQuery } from "./QueryBuilder"
 
 // Re-export query types
 export type {
   ComparisonOperators,
   EntityQuery,
+  EntityWhereConditions,
   ExecutableQuery,
   IsConditions,
   MappedQuery,
@@ -65,7 +66,7 @@ const wrapAsync = <T>(fn: () => Promise<TaskOutcome<T>>): FPromise<TaskOutcome<T
 export const getEntity = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
   table: T,
-  where: WhereConditions<TableRow<T, DB>>,
+  where: EntityWhereConditions<TableRow<T, DB>>,
   is?: IsConditionsLocal<TableRow<T, DB>>,
   schema?: string,
 ): FPromise<TaskOutcome<TableRow<T, DB>>> =>
@@ -110,7 +111,7 @@ export const getEntity = <T extends TableNames<DB>, DB extends DatabaseSchema = 
 export const getEntities = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
   table: T,
-  where: WhereConditions<TableRow<T, DB>> = {},
+  where: EntityWhereConditions<TableRow<T, DB>> = {},
   is?: IsConditionsLocal<TableRow<T, DB>>,
   wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
   order: [keyof TableRow<T, DB> & string, { ascending?: boolean; nullsFirst?: boolean }] = [
@@ -202,7 +203,7 @@ export const updateEntity = <T extends TableNames<DB>, DB extends DatabaseSchema
   client: SupabaseClientType<DB>,
   table: T,
   entities: TableUpdate<T, DB>,
-  where: WhereConditions<TableRow<T, DB>>,
+  where: EntityWhereConditions<TableRow<T, DB>>,
   is?: IsConditionsLocal<TableRow<T, DB>>,
   wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
   schema?: string,
@@ -259,7 +260,7 @@ export const upsertEntities = <T extends TableNames<DB>, DB extends DatabaseSche
   entities: TableUpdate<T, DB>[],
   identity: (keyof TableRow<T, DB> & string) | (keyof TableRow<T, DB> & string)[] = "id" as keyof TableRow<T, DB> &
     string,
-  where?: WhereConditions<TableRow<T, DB>>,
+  where?: EntityWhereConditions<TableRow<T, DB>>,
   is?: IsConditionsLocal<TableRow<T, DB>>,
   wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
   schema?: string,
@@ -312,7 +313,7 @@ export const upsertEntities = <T extends TableNames<DB>, DB extends DatabaseSche
 export const deleteEntity = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
   table: T,
-  where: WhereConditions<TableRow<T, DB>>,
+  where: EntityWhereConditions<TableRow<T, DB>>,
   is?: IsConditionsLocal<TableRow<T, DB>>,
   wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
   schema?: string,
@@ -363,7 +364,7 @@ export const deleteEntity = <T extends TableNames<DB>, DB extends DatabaseSchema
 export const deleteEntities = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
   table: T,
-  where: WhereConditions<TableRow<T, DB>>,
+  where: EntityWhereConditions<TableRow<T, DB>>,
   is?: IsConditionsLocal<TableRow<T, DB>>,
   wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
   schema?: string,
@@ -414,7 +415,7 @@ export const deleteEntities = <T extends TableNames<DB>, DB extends DatabaseSche
 export const softDeleteEntity = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
   table: T,
-  where: WhereConditions<TableRow<T, DB>>,
+  where: EntityWhereConditions<TableRow<T, DB>>,
   is?: IsConditionsLocal<TableRow<T, DB>>,
   wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
   schema?: string,
@@ -465,7 +466,7 @@ export const softDeleteEntity = <T extends TableNames<DB>, DB extends DatabaseSc
 export const softDeleteEntities = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
   table: T,
-  where: WhereConditions<TableRow<T, DB>>,
+  where: EntityWhereConditions<TableRow<T, DB>>,
   is?: IsConditionsLocal<TableRow<T, DB>>,
   wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
   schema?: string,

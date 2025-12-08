@@ -2,7 +2,7 @@
  * Shared type definitions for Entity and PartitionedEntity
  */
 
-import type { MultiExecution, Query, SingleExecution, WhereConditions } from "@/query/Query"
+import type { EntityWhereConditions, MultiExecution, Query, SingleExecution } from "@/query/Query"
 import type { Database, DatabaseSchema, EmptyObject, TableInsert, TableNames, TableRow, TableUpdate } from "@/types"
 
 import type { Brand, FPromise, List, TaskOutcome } from "functype"
@@ -58,7 +58,7 @@ export type PartitionedEntityConfig = {
 // =============================================================================
 
 export type WhereParams<T extends object = EmptyObject> = {
-  where?: WhereConditions<T>
+  where?: EntityWhereConditions<T>
 }
 
 export type IsParams<T extends object = EmptyObject> = {
@@ -101,7 +101,7 @@ export type UpdateItemParams<
   DB extends DatabaseSchema = Database,
 > = {
   /** Conditions to match the item to update */
-  where: WhereConditions<Row>
+  where: EntityWhereConditions<Row>
   /** The data to update */
   data: TableUpdate<T, DB>
 } & IsParams<Row> &
@@ -116,7 +116,7 @@ export type UpdateItemsParams<
   DB extends DatabaseSchema = Database,
 > = {
   /** Conditions to match items to update */
-  where: WhereConditions<Row>
+  where: EntityWhereConditions<Row>
   /** The data to update on all matched items */
   data: TableUpdate<T, DB>
 } & IsParams<Row> &
@@ -141,7 +141,7 @@ export type UpsertItemsParams<
  */
 export type DeleteItemParams<Row extends object = EmptyObject> = {
   /** Conditions to match the item to delete */
-  where: WhereConditions<Row>
+  where: EntityWhereConditions<Row>
 } & IsParams<Row> &
   WhereinParams<Row>
 
@@ -150,7 +150,7 @@ export type DeleteItemParams<Row extends object = EmptyObject> = {
  */
 export type DeleteItemsParams<Row extends object = EmptyObject> = {
   /** Conditions to match items to delete */
-  where: WhereConditions<Row>
+  where: EntityWhereConditions<Row>
 } & IsParams<Row> &
   WhereinParams<Row>
 

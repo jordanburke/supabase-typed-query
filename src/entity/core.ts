@@ -11,7 +11,7 @@ import {
   updateEntity,
   upsertEntities,
 } from "@/query"
-import type { WhereConditions } from "@/query/Query"
+import type { EntityWhereConditions, WhereConditions } from "@/query/Query"
 import { createQuery } from "@/query/QueryBuilder"
 import type { Database, DatabaseSchema, SupabaseClientType, TableNames, TableRow, TableUpdate } from "@/types"
 
@@ -54,7 +54,7 @@ export function getSoftDeleteMode(softDelete: boolean): SoftDeleteMode {
 export function buildWhereWithPartition<T extends object>(
   partitionField: string,
   partitionKey: PartitionKey,
-  where?: WhereConditions<T>,
+  where?: EntityWhereConditions<T>,
 ): WhereConditions<T> {
   const partitionCondition = { [partitionField]: partitionKey as string }
   return { ...partitionCondition, ...where } as WhereConditions<T>
@@ -67,7 +67,7 @@ export function buildWhereWithPartitionAndId<T extends object>(
   partitionField: string,
   partitionKey: PartitionKey,
   id: string,
-  where?: WhereConditions<T>,
+  where?: EntityWhereConditions<T>,
 ): WhereConditions<T> {
   const partitionCondition = { [partitionField]: partitionKey as string }
   return { ...partitionCondition, ...where, id } as WhereConditions<T>

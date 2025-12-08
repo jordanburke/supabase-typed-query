@@ -30,6 +30,22 @@ export type WhereConditions<T extends object> = Partial<{
   ilike?: Partial<{ [K in keyof T]?: Extract<T[K], string> }>
 }
 
+/**
+ * Entity-specific WHERE conditions - no nested ComparisonOperators allowed.
+ * Entity API methods (getItems, updateItem, etc.) don't process nested operators.
+ * Use separate `is`, `wherein`, etc. parameters for these operations.
+ *
+ * @example
+ * // Correct Entity usage:
+ * Entity.getItems({ where: { code }, is: { used_at: null } })
+ *
+ * // Incorrect (use Query API instead for nested operators):
+ * Entity.getItems({ where: { code, used_at: { is: null } } }) // TypeScript error
+ */
+export type EntityWhereConditions<T extends object> = Partial<{
+  [K in keyof T]: T[K] | null
+}>
+
 // Enhanced type for IS conditions with field-level type safety
 export type IsConditions<T extends object = EmptyObject> = Partial<Record<keyof T, null | boolean>>
 
