@@ -17,7 +17,7 @@
  * ```
  */
 
-import type { Database, DatabaseSchema, SupabaseClientType, TableNames } from "@/types"
+import type { Database, DatabaseSchema, SchemaNames, SupabaseClientType, TableNames } from "@/types"
 
 import {
   getSoftDeleteMode,
@@ -66,12 +66,28 @@ export { MultiMutationQuery, SingleMutationQuery } from "./types"
  *
  * @typeParam T - The table name type
  * @typeParam DB - The database schema type (defaults to placeholder Database)
+ * @typeParam S - The schema name (defaults to "public")
+ *
+ * @example
+ * ```typescript
+ * // Using default public schema
+ * const Users = Entity<"users">(client, "users", { softDelete: false })
+ *
+ * // Using a custom schema
+ * const Tokens = Entity<"provider_tokens", Database, "agent_todo">(
+ *   client, "provider_tokens", { softDelete: false }
+ * )
+ * ```
  */
-export const Entity = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
+export const Entity = <
+  T extends TableNames<DB, S>,
+  DB extends DatabaseSchema = Database,
+  S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
+>(
   client: SupabaseClientType<DB>,
   name: T,
   config: EntityConfig,
-): IEntity<T, DB> => {
+): IEntity<T, DB, S> => {
   const softDeleteMode = getSoftDeleteMode(config.softDelete)
   const { schema } = config
 
@@ -81,42 +97,42 @@ export const Entity = <T extends TableNames<DB>, DB extends DatabaseSchema = Dat
      * @param params Query parameters including id, where conditions, and is conditions
      * @returns A chainable query that can be executed with .one(), .many(), or .first()
      */
-    getItem: makeGetItem<T, DB>(client, name, softDeleteMode, schema),
+    getItem: makeGetItem<T, DB, S>(client, name, softDeleteMode, schema),
 
     /**
      * Get a list of items from the table filtered by conditions.
      * @param params Optional query parameters including where, is, wherein, and order
      * @returns A chainable query that can be executed with .one(), .many(), or .first()
      */
-    getItems: makeGetItems<T, DB>(client, name, softDeleteMode, schema),
+    getItems: makeGetItems<T, DB, S>(client, name, softDeleteMode, schema),
 
     /**
      * Adds multiple items to the table.
      * @param params Parameters including items array
      * @returns A mutation query with OrThrow methods
      */
-    addItems: makeAddItems<T, DB>(client, name, schema),
+    addItems: makeAddItems<T, DB, S>(client, name, schema),
 
     /**
      * Update a single item in the table.
      * @param params Update parameters including id, item data, and optional filters
      * @returns A mutation query with OrThrow methods
      */
-    updateItem: makeUpdateItem<T, DB>(client, name, schema),
+    updateItem: makeUpdateItem<T, DB, S>(client, name, schema),
 
     /**
      * Update multiple items in the table.
      * @param params Update parameters including items array, identity, and optional filters
      * @returns A mutation query with OrThrow methods
      */
-    updateItems: makeUpdateItems<T, DB>(client, name, schema),
+    updateItems: makeUpdateItems<T, DB, S>(client, name, schema),
 
     /**
      * Upsert multiple items with different data per row.
      * @param params Upsert parameters including items array and identity columns
      * @returns A mutation query with OrThrow methods
      */
-    upsertItems: makeUpsertItems<T, DB>(client, name, schema),
+    upsertItems: makeUpsertItems<T, DB, S>(client, name, schema),
 
     /**
      * Delete a single item from the table.
@@ -124,7 +140,7 @@ export const Entity = <T extends TableNames<DB>, DB extends DatabaseSchema = Dat
      * @param params Delete parameters including where conditions
      * @returns A mutation query with OrThrow methods, returns deleted row
      */
-    deleteItem: makeDeleteItem<T, DB>(client, name, config.softDelete, schema),
+    deleteItem: makeDeleteItem<T, DB, S>(client, name, config.softDelete, schema),
 
     /**
      * Delete multiple items from the table.
@@ -132,6 +148,6 @@ export const Entity = <T extends TableNames<DB>, DB extends DatabaseSchema = Dat
      * @param params Delete parameters including where conditions
      * @returns A mutation query with OrThrow methods, returns deleted rows
      */
-    deleteItems: makeDeleteItems<T, DB>(client, name, config.softDelete, schema),
+    deleteItems: makeDeleteItems<T, DB, S>(client, name, config.softDelete, schema),
   }
 }
