@@ -11,7 +11,7 @@ import {
   updateEntity,
   upsertEntities,
 } from "@/query"
-import type { EntityWhereConditions, WhereConditions } from "@/query/Query"
+import type { EntityWhereConditions, Query, WhereConditions } from "@/query/Query"
 import { createQuery } from "@/query/QueryBuilder"
 import type {
   Database,
@@ -99,8 +99,8 @@ export function createGetItemQuery<
   is: TypedRecord<TableRow<T, DB, S>, null | boolean> | undefined,
   softDeleteMode: SoftDeleteMode,
   schema?: string,
-) {
-  return createQuery<T, DB>(
+): Query<TableRow<T, DB, S>> {
+  return createQuery(
     client,
     name,
     whereConditions as WhereConditions<TableRow<T, DB>>,
@@ -112,7 +112,7 @@ export function createGetItemQuery<
       appliedByDefault: true,
     },
     schema,
-  )
+  ) as unknown as Query<TableRow<T, DB, S>>
 }
 
 /**
@@ -131,8 +131,17 @@ export function createGetItemsQuery<
   order: GetItemsParams<TableRow<T, DB, S>>["order"],
   softDeleteMode: SoftDeleteMode,
   schema?: string,
-) {
-  return createQuery<T, DB>(
+  comparison?: {
+    gte?: TypedRecord<TableRow<T, DB, S>, number | string | Date>
+    gt?: TypedRecord<TableRow<T, DB, S>, number | string | Date>
+    lte?: TypedRecord<TableRow<T, DB, S>, number | string | Date>
+    lt?: TypedRecord<TableRow<T, DB, S>, number | string | Date>
+    neq?: TypedRecord<TableRow<T, DB, S>, unknown>
+    like?: TypedRecord<TableRow<T, DB, S>, string>
+    ilike?: TypedRecord<TableRow<T, DB, S>, string>
+  },
+): Query<TableRow<T, DB, S>> {
+  return createQuery(
     client,
     name,
     whereConditions as WhereConditions<TableRow<T, DB>>,
@@ -144,7 +153,16 @@ export function createGetItemsQuery<
       appliedByDefault: true,
     },
     schema,
-  )
+    comparison as {
+      gte?: TypedRecord<TableRow<T, DB>, number | string | Date>
+      gt?: TypedRecord<TableRow<T, DB>, number | string | Date>
+      lte?: TypedRecord<TableRow<T, DB>, number | string | Date>
+      lt?: TypedRecord<TableRow<T, DB>, number | string | Date>
+      neq?: TypedRecord<TableRow<T, DB>, unknown>
+      like?: TypedRecord<TableRow<T, DB>, string>
+      ilike?: TypedRecord<TableRow<T, DB>, string>
+    },
+  ) as unknown as Query<TableRow<T, DB, S>>
 }
 
 // =============================================================================
@@ -285,7 +303,19 @@ export function makeGetItems<
   DB extends DatabaseSchema = Database,
   S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
 >(client: SupabaseClientType<DB>, name: T, softDeleteMode: SoftDeleteMode, schema?: string) {
-  return function getItems({ where, is, wherein, order }: GetItemsParams<TableRow<T, DB, S>> = {}) {
+  return function getItems({
+    where,
+    is,
+    wherein,
+    order,
+    gte,
+    gt,
+    lte,
+    lt,
+    neq,
+    like,
+    ilike,
+  }: GetItemsParams<TableRow<T, DB, S>> = {}) {
     return createGetItemsQuery<T, DB, S>(
       client,
       name,
@@ -295,6 +325,7 @@ export function makeGetItems<
       order,
       softDeleteMode,
       schema,
+      { gte, gt, lte, lt, neq, like, ilike },
     )
   }
 }
@@ -330,7 +361,10 @@ export function makePartitionedGetItems<
   DB extends DatabaseSchema = Database,
   S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
 >(client: SupabaseClientType<DB>, name: T, partitionField: string, softDeleteMode: SoftDeleteMode, schema?: string) {
-  return function getItems(partitionKey: K, { where, is, wherein, order }: GetItemsParams<TableRow<T, DB, S>> = {}) {
+  return function getItems(
+    partitionKey: K,
+    { where, is, wherein, order, gte, gt, lte, lt, neq, like, ilike }: GetItemsParams<TableRow<T, DB, S>> = {},
+  ) {
     const whereConditions = buildWhereWithPartition(partitionField, partitionKey, where)
     return createGetItemsQuery<T, DB, S>(
       client,
@@ -341,6 +375,7 @@ export function makePartitionedGetItems<
       order,
       softDeleteMode,
       schema,
+      { gte, gt, lte, lt, neq, like, ilike },
     )
   }
 }

@@ -269,12 +269,20 @@ export interface RpcQueryBuilder extends Promise<{ data: unknown; error: unknown
  * Uses `unknown` return type to allow SupabaseClient<Database> from @supabase/supabase-js
  * to be used directly without type casting.
  *
+ * This interface is intentionally permissive to accept Supabase clients configured for
+ * different schemas (e.g., SupabaseClient<Database, "public", "custom_schema">).
+ * The Entity/PartitionedEntity functions use their own schema type parameter for type safety.
+ *
+ * Note: The DB type parameter is unused but kept for API consistency and future extensibility.
+ *
  * @typeParam DB - The database schema type (defaults to placeholder Database)
  */
-export interface SupabaseClientType<DB extends DatabaseSchema = Database> {
-  from: (table: TableNames<DB>) => unknown
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export interface SupabaseClientType<_DB extends DatabaseSchema = Database> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  schema: (name: any) => SupabaseSchemaAccessor
+  from: (table: any) => any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  rpc: (fn: string, args?: Record<string, any>, options?: { count?: "exact" | "planned" | "estimated" }) => unknown
+  schema: (name: any) => any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  rpc: (...args: any[]) => any
 }

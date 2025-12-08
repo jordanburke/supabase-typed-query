@@ -22,6 +22,7 @@ import type {
   FunctionArgs,
   FunctionNames,
   FunctionReturns,
+  SchemaNames,
   SupabaseClientType,
 } from "@/types"
 import { toError } from "@/utils/errors"
@@ -105,6 +106,7 @@ const wrapAsync = <T>(fn: () => Promise<TaskOutcome<T>>): FPromise<TaskOutcome<T
  *
  * @template F - The function name (must exist in database schema)
  * @template DB - The database schema type
+ * @template S - The schema name (defaults to "public")
  * @param client - The Supabase client instance
  * @param functionName - The name of the PostgreSQL function to call
  * @param args - Arguments to pass to the function (type-safe based on function definition)
@@ -129,15 +131,22 @@ const wrapAsync = <T>(fn: () => Promise<TaskOutcome<T>>): FPromise<TaskOutcome<T
  * // Using OrThrow variants
  * const stats = await rpc(client, "get_user_stats", { user_id: "123" }).oneOrThrow()
  * const results = await rpc(client, "search_all").manyOrThrow()
+ *
+ * // Using custom schema
+ * const result = await rpc<"cleanup_data", Database, "agent_gate">(client, "cleanup_data").one()
  * ```
  */
-export const rpc = <F extends FunctionNames<DB>, DB extends DatabaseSchema = Database>(
+export const rpc = <
+  F extends FunctionNames<DB, S>,
+  DB extends DatabaseSchema = Database,
+  S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
+>(
   client: SupabaseClientType<DB>,
   functionName: F,
-  args?: FunctionArgs<F, DB>,
+  args?: FunctionArgs<F, DB, S>,
   options?: RpcOptions,
-): RpcExecution<FunctionReturns<F, DB>> => {
-  type ReturnType = FunctionReturns<F, DB>
+): RpcExecution<FunctionReturns<F, DB, S>> => {
+  type ReturnType = FunctionReturns<F, DB, S>
 
   const executeRpc = (): Promise<{ data: unknown; error: unknown }> => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

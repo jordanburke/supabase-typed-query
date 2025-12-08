@@ -515,7 +515,7 @@ export const softDeleteEntities = <T extends TableNames<DB>, DB extends Database
  * @param wherein - Initial WHERE IN conditions to filter by
  * @param order - Optional ordering parameters
  * @param schema - Database schema to query (defaults to "public")
- * @returns A Query<T, DB> instance that supports chaining and lazy evaluation
+ * @returns A Query instance that supports chaining and lazy evaluation
  *
  * @example
  * // Simple query
@@ -546,6 +546,6 @@ export const query = <T extends TableNames<DB>, DB extends DatabaseSchema = Data
   wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
   order?: [keyof TableRow<T, DB> & string, { ascending?: boolean; nullsFirst?: boolean }],
   schema?: string,
-): Query<T, DB> => {
+): Query<TableRow<T, DB>> => {
   return createQuery<T, DB>(client, table, where, is, wherein, order, undefined, schema)
 }

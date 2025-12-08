@@ -6,6 +6,21 @@ import type { QueryBuilderConfig } from "@/query/Query"
 import { QueryBuilder } from "@/query/QueryBuilder"
 import type { SupabaseClientType } from "@/types"
 
+// Mock row type for testing
+type UserRow = {
+  id: string
+  name: string
+  role: string
+  active: boolean
+  deleted: string | null
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyConfig = QueryBuilderConfig<any>
+
+// Helper to create test configs with proper typing for mock clients
+const testConfig = (config: QueryBuilderConfig<UserRow>): AnyConfig => config as AnyConfig
+
 describe("QueryBuilder", () => {
   // Mock client for testing
   const mockClient: SupabaseClientType = createMockSupabaseClient({
@@ -15,10 +30,10 @@ describe("QueryBuilder", () => {
 
   describe("Constructor Function", () => {
     it("should create a Query interface from config", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: { id: "test-id" } }],
-      }
+      })
 
       const query = QueryBuilder(mockClient, config)
 
@@ -42,20 +57,20 @@ describe("QueryBuilder", () => {
     })
 
     it("should handle empty where conditions", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: {} }],
-      }
+      })
 
       const query = QueryBuilder(mockClient, config)
       expect(query).toBeDefined()
     })
 
     it("should handle multiple conditions", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: { role: "admin" } }, { where: { role: "contributor" } }, { where: { deleted: null } }],
-      }
+      })
 
       const query = QueryBuilder(mockClient, config)
       expect(query).toBeDefined()
@@ -64,10 +79,10 @@ describe("QueryBuilder", () => {
 
   describe("OR Method", () => {
     it("should add OR conditions to existing query", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: { role: "admin" } }],
-      }
+      })
 
       const query1 = QueryBuilder(mockClient, config)
       const query2 = query1.or({ role: "contributor" })
@@ -79,10 +94,10 @@ describe("QueryBuilder", () => {
     })
 
     it("should chain multiple OR conditions", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: { role: "admin" } }],
-      }
+      })
 
       const query = QueryBuilder(mockClient, config)
         .or({ role: "contributor" })
@@ -94,10 +109,10 @@ describe("QueryBuilder", () => {
     })
 
     it("should support IS conditions in OR", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: { role: "admin" } }],
-      }
+      })
 
       const query = QueryBuilder(mockClient, config).or({ role: "contributor" }, { deleted: null })
 
@@ -113,10 +128,10 @@ describe("QueryBuilder", () => {
       ]
       const client = createMockSupabaseClient({ data, error: null })
 
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: {} }],
-      }
+      })
 
       const query = QueryBuilder(client, config).map((user) => user.name)
 
@@ -126,10 +141,10 @@ describe("QueryBuilder", () => {
     })
 
     it("should chain multiple map operations", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: {} }],
-      }
+      })
 
       const query = QueryBuilder(mockClient, config)
         .map((user) => user.name)
@@ -141,10 +156,10 @@ describe("QueryBuilder", () => {
 
   describe("Filter Method", () => {
     it("should filter query results", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: {} }],
-      }
+      })
 
       const query = QueryBuilder(mockClient, config).filter((user) => user.active === true)
 
@@ -153,10 +168,10 @@ describe("QueryBuilder", () => {
     })
 
     it("should chain multiple filter operations", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: {} }],
-      }
+      })
 
       const query = QueryBuilder(mockClient, config)
         .filter((user) => user.active === true)
@@ -168,10 +183,10 @@ describe("QueryBuilder", () => {
 
   describe("Pagination Methods", () => {
     it("should add limit to query", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: {} }],
-      }
+      })
 
       const query = QueryBuilder(mockClient, config).limit(10)
 
@@ -179,10 +194,10 @@ describe("QueryBuilder", () => {
     })
 
     it("should add offset to query", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: {} }],
-      }
+      })
 
       const query = QueryBuilder(mockClient, config).offset(20)
 
@@ -190,10 +205,10 @@ describe("QueryBuilder", () => {
     })
 
     it("should combine limit and offset", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: {} }],
-      }
+      })
 
       const query = QueryBuilder(mockClient, config).limit(10).offset(20)
 
@@ -203,11 +218,11 @@ describe("QueryBuilder", () => {
 
   describe("Soft Delete Methods", () => {
     it("should support includeDeleted mode", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: {} }],
         softDeleteMode: "exclude",
-      }
+      })
 
       const query = QueryBuilder(mockClient, config).includeDeleted()
 
@@ -215,11 +230,11 @@ describe("QueryBuilder", () => {
     })
 
     it("should support excludeDeleted mode", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: {} }],
         softDeleteMode: "include",
-      }
+      })
 
       const query = QueryBuilder(mockClient, config).excludeDeleted()
 
@@ -227,10 +242,10 @@ describe("QueryBuilder", () => {
     })
 
     it("should support onlyDeleted mode", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: {} }],
-      }
+      })
 
       const query = QueryBuilder(mockClient, config).onlyDeleted()
 
@@ -240,10 +255,10 @@ describe("QueryBuilder", () => {
 
   describe("Query Building", () => {
     it("should call from with correct table name", () => {
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
         conditions: [{ where: { id: "test-id" } }],
-      }
+      })
 
       void QueryBuilder(mockClient, config).many()
 
@@ -260,10 +275,10 @@ describe("QueryBuilder", () => {
 
       const client = { from: fromSpy } as unknown as SupabaseClientType
 
-      const config: QueryBuilderConfig<"users"> = {
+      const config = testConfig({
         table: "users",
-        conditions: [{ where: { email: "test@example.com" } }],
-      }
+        conditions: [{ where: { name: "Test User" } }],
+      })
 
       QueryBuilder(client, config).many()
 

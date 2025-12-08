@@ -82,6 +82,16 @@ export type OrderParams<T extends object = EmptyObject> = {
   order?: [keyof T & string, { ascending?: boolean; nullsFirst?: boolean }]
 }
 
+export type ComparisonParams<T extends object = EmptyObject> = {
+  gte?: TypedRecord<T, number | string | Date>
+  gt?: TypedRecord<T, number | string | Date>
+  lte?: TypedRecord<T, number | string | Date>
+  lt?: TypedRecord<T, number | string | Date>
+  neq?: TypedRecord<T, unknown>
+  like?: TypedRecord<T, string>
+  ilike?: TypedRecord<T, string>
+}
+
 export type IdParam = {
   id: string
 }
@@ -95,7 +105,8 @@ export type GetItemParams<T extends object = EmptyObject> = IdParam & WhereParam
 export type GetItemsParams<T extends object = EmptyObject> = WhereParams<T> &
   IsParams<T> &
   WhereinParams<T> &
-  OrderParams<T>
+  OrderParams<T> &
+  ComparisonParams<T>
 
 export type AddItemsParams<
   T extends TableNames<DB, S>,
@@ -239,8 +250,8 @@ export type IEntity<
   DB extends DatabaseSchema = Database,
   S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
 > = {
-  getItem(params: GetItemParams<TableRow<T, DB, S>>): Query<T, DB>
-  getItems(params?: GetItemsParams<TableRow<T, DB, S>>): Query<T, DB>
+  getItem(params: GetItemParams<TableRow<T, DB, S>>): Query<TableRow<T, DB, S>>
+  getItems(params?: GetItemsParams<TableRow<T, DB, S>>): Query<TableRow<T, DB, S>>
   addItems(params: AddItemsParams<T, DB, S>): MutationMultiExecution<TableRow<T, DB, S>>
   updateItem(params: UpdateItemParams<T, TableRow<T, DB, S>, DB, S>): MutationSingleExecution<TableRow<T, DB, S>>
   updateItems(params: UpdateItemsParams<T, TableRow<T, DB, S>, DB, S>): MutationMultiExecution<TableRow<T, DB, S>>
@@ -263,8 +274,8 @@ export type IPartitionedEntity<
   DB extends DatabaseSchema = Database,
   S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
 > = {
-  getItem(partitionKey: K, params: GetItemParams<TableRow<T, DB, S>>): Query<T, DB>
-  getItems(partitionKey: K, params?: GetItemsParams<TableRow<T, DB, S>>): Query<T, DB>
+  getItem(partitionKey: K, params: GetItemParams<TableRow<T, DB, S>>): Query<TableRow<T, DB, S>>
+  getItems(partitionKey: K, params?: GetItemsParams<TableRow<T, DB, S>>): Query<TableRow<T, DB, S>>
   addItems(params: AddItemsParams<T, DB, S>): MutationMultiExecution<TableRow<T, DB, S>>
   updateItem(
     partitionKey: K,
