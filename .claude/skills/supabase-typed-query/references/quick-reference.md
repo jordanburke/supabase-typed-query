@@ -37,11 +37,22 @@ query<TableName, Database>(client, "table", where?, is?, wherein?, order?, schem
   gt: V         // >  (greater than)
   lte: V        // <= (less than or equal)
   lt: V         // <  (less than)
-  neq: V        // != (not equal)
+  neq: V        // != (not equal, use NOT for null)
   like: string  // LIKE pattern (case-sensitive)
   ilike: string // ILIKE pattern (case-insensitive)
   in: V[]       // IN array
   is: null | boolean  // IS NULL / IS TRUE / IS FALSE
+}
+```
+
+### NOT Operator
+
+```typescript
+{
+  not: {
+    is: { field: null | boolean }  // IS NOT NULL / IS NOT TRUE / IS NOT FALSE
+    in: { field: V[] }             // NOT IN array
+  }
 }
 ```
 
@@ -62,7 +73,15 @@ query<TableName, Database>(client, "table", where?, is?, wherein?, order?, schem
 
 // IS NULL
 { deleted_at: { is: null } }
+
+// IS NOT NULL (using NOT operator)
+{ not: { is: { external_id: null } } }
+
+// NOT IN
+{ not: { in: { status: ["draft", "spam"] } } }
 ```
+
+> **Note**: `neq: null` is deprecated. Use `not: { is: { field: null } }` for IS NOT NULL.
 
 ## RPC API
 

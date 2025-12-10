@@ -169,4 +169,51 @@ describe("Query Comparison Operators", () => {
       expect(q).toBeDefined()
     })
   })
+
+  describe("NOT operator", () => {
+    it("should support not is null (IS NOT NULL)", () => {
+      const q = query(mockClient, "posts", { not: { is: { published_at: null } } })
+
+      expect(q).toBeDefined()
+      expect(typeof q.many).toBe("function")
+    })
+
+    it("should support not is true (IS NOT TRUE)", () => {
+      const q = query(mockClient, "users", { not: { is: { active: true } } })
+
+      expect(q).toBeDefined()
+    })
+
+    it("should support not is false (IS NOT FALSE)", () => {
+      const q = query(mockClient, "users", { not: { is: { active: false } } })
+
+      expect(q).toBeDefined()
+    })
+
+    it("should support not in (NOT IN)", () => {
+      const q = query(mockClient, "posts", { not: { in: { status: ["draft", "archived"] } } })
+
+      expect(q).toBeDefined()
+    })
+
+    it("should support combined not conditions", () => {
+      const q = query(mockClient, "posts", {
+        not: {
+          is: { deleted: null },
+          in: { status: ["spam", "trash"] },
+        },
+      })
+
+      expect(q).toBeDefined()
+    })
+
+    it("should support not with other operators", () => {
+      const q = query(mockClient, "posts", {
+        status: "published",
+        not: { is: { external_id: null } },
+      })
+
+      expect(q).toBeDefined()
+    })
+  })
 })

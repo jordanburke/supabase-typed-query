@@ -92,6 +92,13 @@ export type ComparisonParams<T extends object = EmptyObject> = {
   ilike?: TypedRecord<T, string>
 }
 
+export type NotParams<T extends object = EmptyObject> = {
+  not?: {
+    is?: TypedRecord<T, null | boolean> // NOT IS NULL, NOT IS TRUE, NOT IS FALSE
+    in?: TypedRecord<T, unknown[]> // NOT IN array
+  }
+}
+
 export type IdParam = {
   id: string
 }
@@ -106,7 +113,8 @@ export type GetItemsParams<T extends object = EmptyObject> = WhereParams<T> &
   IsParams<T> &
   WhereinParams<T> &
   OrderParams<T> &
-  ComparisonParams<T>
+  ComparisonParams<T> &
+  NotParams<T>
 
 export type AddItemsParams<
   T extends TableNames<DB, S>,

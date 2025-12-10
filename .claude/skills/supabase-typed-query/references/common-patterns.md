@@ -365,16 +365,58 @@ const searchResults = await query<"posts", Database>(client, "posts", {
 ### Null Checks
 
 ```typescript
-// Find posts without published date (drafts)
+// Find posts without published date (drafts) - IS NULL
 const drafts = await query<"posts", Database>(client, "posts", {
   published_at: { is: null },
 }).manyOrThrow()
 
-// Find posts with published date
+// Find posts with published date - IS NOT NULL (using NOT operator)
 const published = await query<"posts", Database>(client, "posts", {
-  published_at: { is: false }, // IS NOT NULL
+  not: { is: { published_at: null } },
+}).manyOrThrow()
+
+// Find posts with external_id set
+const linkedPosts = await query<"posts", Database>(client, "posts", {
+  status: "published",
+  not: { is: { external_id: null } },
 }).manyOrThrow()
 ```
+
+### NOT IN Queries
+
+```typescript
+// Exclude specific statuses
+const visiblePosts = await query<"posts", Database>(client, "posts", {
+  not: { in: { status: ["draft", "archived", "spam"] } },
+}).manyOrThrow()
+
+// Exclude multiple categories
+const generalPosts = await query<"posts", Database>(client, "posts", {
+  status: "published",
+  not: { in: { category_id: ["internal", "test", "admin"] } },
+}).manyOrThrow()
+```
+
+### Combined NOT Conditions
+
+```typescript
+// Multiple NOT conditions in one query
+const filteredPosts = await query<"posts", Database>(client, "posts", {
+  status: "published",
+  not: {
+    is: { deleted: null }, // IS NOT NULL (was soft deleted then restored)
+    in: { tag: ["internal", "test"] },
+  },
+}).manyOrThrow()
+
+// Entity API with NOT
+const posts = await PostEntity.getItems({
+  where: { author_id: userId },
+  not: { is: { published_at: null } },
+}).manyOrThrow()
+```
+
+> **Note**: `neq: null` is deprecated. Use `not: { is: { field: null } }` for IS NOT NULL checks.
 
 ## RPC (Stored Procedures) Patterns
 

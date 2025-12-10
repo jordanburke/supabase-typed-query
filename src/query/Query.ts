@@ -49,6 +49,12 @@ export type EntityWhereConditions<T extends object> = Partial<{
 // Enhanced type for IS conditions with field-level type safety
 export type IsConditions<T extends object = EmptyObject> = Partial<Record<keyof T, null | boolean>>
 
+// NOT conditions for negating IS and IN operations (follows Supabase .not() pattern)
+export type NotConditions<T extends object = EmptyObject> = {
+  is?: Partial<Record<keyof T, null | boolean>> // NOT IS NULL, NOT IS TRUE, NOT IS FALSE
+  in?: Partial<Record<keyof T, unknown[]>> // NOT IN array
+}
+
 // Soft delete mode for controlling how deleted records are handled
 export type SoftDeleteMode = "include" | "exclude" | "only"
 
@@ -171,6 +177,8 @@ export interface QueryCondition<Row extends object> {
   // Pattern matching
   like?: Partial<Record<keyof Row, string>>
   ilike?: Partial<Record<keyof Row, string>>
+  // NOT conditions (for IS NOT NULL, NOT IN, etc.)
+  not?: NotConditions<Row>
 }
 
 // =============================================================================

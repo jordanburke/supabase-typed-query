@@ -71,7 +71,7 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const applyCondition = (query: any, condition: QueryCondition<TableRow<T, DB>>): any => {
-    const { where, is, wherein, gt, gte, lt, lte, neq, like, ilike } = condition
+    const { where, is, wherein, gt, gte, lt, lte, neq, like, ilike, not } = condition
 
     // Process WHERE conditions, extracting operators from the where object
     const processedWhere: Record<string, unknown> = {}
@@ -241,7 +241,13 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
 
     const queryWithNeq =
       Object.keys(mergedNeq).length > 0
-        ? Object.entries(mergedNeq).reduce((q, [key, value]) => q.neq(key, value), queryWithLte)
+        ? Object.entries(mergedNeq).reduce((q, [key, value]) => {
+            if (value === null) {
+              log.warn(`neq: null is deprecated. Use not: { is: { ${key}: null } } for IS NOT NULL`)
+              return q.not(key, "is", null)
+            }
+            return q.neq(key, value)
+          }, queryWithLte)
         : queryWithLte
 
     // Apply pattern matching using merged values
@@ -255,7 +261,16 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
         ? Object.entries(mergedIlike).reduce((q, [key, pattern]) => q.ilike(key, pattern as string), queryWithLike)
         : queryWithLike
 
-    return queryWithIlike
+    // Apply NOT conditions (IS NOT NULL, NOT IN, etc.)
+    const queryWithNotIs = not?.is
+      ? Object.entries(not.is).reduce((q, [key, value]) => q.not(key, "is", value), queryWithIlike)
+      : queryWithIlike
+
+    const queryWithNot = not?.in
+      ? Object.entries(not.in).reduce((q, [key, values]) => q.not(key, "in", values as never), queryWithNotIs)
+      : queryWithNotIs
+
+    return queryWithNot
   }
 
   /**
@@ -312,6 +327,7 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
             where: newWhere as WhereConditions<TableRow<T, DB>>,
             is: condition.is,
             wherein: condition.wherein,
+            not: condition.not,
           }
         }),
       )
@@ -390,6 +406,7 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
         if (condition.neq) {
           Object.entries(condition.neq).forEach(([key, value]) => {
             if (value === null) {
+              log.warn(`neq: null is deprecated. Use not: { is: { ${key}: null } } for IS NOT NULL`)
               parts.push(`${key}.not.is.null`)
             } else {
               parts.push(`${key}.neq."${value}"`)
@@ -407,6 +424,27 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
           Object.entries(condition.ilike).forEach(([key, pattern]) => {
             parts.push(`${key}.ilike."${pattern}"`)
           })
+        }
+
+        // Add NOT conditions (IS NOT NULL, NOT IN)
+        if (condition.not) {
+          if (condition.not.is) {
+            Object.entries(condition.not.is).forEach(([key, value]) => {
+              if (value === null) {
+                parts.push(`${key}.not.is.null`)
+              } else {
+                parts.push(`${key}.not.is.${value}`)
+              }
+            })
+          }
+          if (condition.not.in) {
+            Object.entries(condition.not.in).forEach(([key, values]) => {
+              if (values && Array.isArray(values) && values.length > 0) {
+                const valueList = values.map((v: unknown) => `"${v}"`).join(",")
+                parts.push(`${key}.not.in.(${valueList})`)
+              }
+            })
+          }
         }
 
         return parts.join(",")
@@ -731,10 +769,14 @@ export const createQuery = <T extends TableNames<DB>, DB extends DatabaseSchema 
     like?: Partial<Record<keyof TableRow<T, DB>, string>>
     ilike?: Partial<Record<keyof TableRow<T, DB>, string>>
   },
+  not?: {
+    is?: Partial<Record<keyof TableRow<T, DB>, null | boolean>>
+    in?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>
+  },
 ): Query<TableRow<T, DB>> => {
   const config: QueryBuilderConfig<TableRow<T, DB>> = {
     table,
-    conditions: [{ where, is, wherein, ...comparison }],
+    conditions: [{ where, is, wherein, ...comparison, not }],
     order,
     softDeleteMode: softDeleteConfig?.mode,
     softDeleteAppliedByDefault: softDeleteConfig?.appliedByDefault,

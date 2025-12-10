@@ -119,7 +119,7 @@ type ComparisonOperators<V> = {
   gt?: V // Greater than
   lte?: V // Less than or equal
   lt?: V // Less than
-  neq?: V // Not equal
+  neq?: V // Not equal (use NOT operator for null)
   like?: string // LIKE pattern
   ilike?: string // Case-insensitive LIKE
   in?: V[] // IN array
@@ -134,6 +134,35 @@ const results = await query<"posts", Database>(client, "posts", {
   published_at: { is: null }, // Find unpublished
 }).manyOrThrow()
 ```
+
+### NOT Operator
+
+The `not` operator follows Supabase conventions for negating IS and IN conditions:
+
+```typescript
+// IS NOT NULL - find posts with external_id set
+const linkedPosts = await query<"posts", Database>(client, "posts", {
+  not: { is: { external_id: null } },
+}).manyOrThrow()
+
+// IS NOT TRUE / IS NOT FALSE
+const nonFeatured = await query<"posts", Database>(client, "posts", {
+  not: { is: { featured: true } },
+}).manyOrThrow()
+
+// NOT IN - exclude specific values
+const activePosts = await query<"posts", Database>(client, "posts", {
+  not: { in: { status: ["draft", "archived", "spam"] } },
+}).manyOrThrow()
+
+// Entity API supports NOT as well
+const items = await PostEntity.getItems({
+  where: { status: "published" },
+  not: { is: { external_id: null } },
+}).manyOrThrow()
+```
+
+> **Note**: `neq: null` is deprecated. Use `not: { is: { field: null } }` instead for IS NOT NULL checks.
 
 ## RPC (Stored Procedures)
 

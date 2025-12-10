@@ -140,6 +140,10 @@ export function createGetItemsQuery<
     like?: TypedRecord<TableRow<T, DB, S>, string>
     ilike?: TypedRecord<TableRow<T, DB, S>, string>
   },
+  not?: {
+    is?: TypedRecord<TableRow<T, DB, S>, null | boolean>
+    in?: TypedRecord<TableRow<T, DB, S>, unknown[]>
+  },
 ): Query<TableRow<T, DB, S>> {
   return createQuery(
     client,
@@ -161,6 +165,10 @@ export function createGetItemsQuery<
       neq?: TypedRecord<TableRow<T, DB>, unknown>
       like?: TypedRecord<TableRow<T, DB>, string>
       ilike?: TypedRecord<TableRow<T, DB>, string>
+    },
+    not as {
+      is?: TypedRecord<TableRow<T, DB>, null | boolean>
+      in?: TypedRecord<TableRow<T, DB>, unknown[]>
     },
   ) as unknown as Query<TableRow<T, DB, S>>
 }
@@ -315,6 +323,7 @@ export function makeGetItems<
     neq,
     like,
     ilike,
+    not,
   }: GetItemsParams<TableRow<T, DB, S>> = {}) {
     return createGetItemsQuery<T, DB, S>(
       client,
@@ -326,6 +335,7 @@ export function makeGetItems<
       softDeleteMode,
       schema,
       { gte, gt, lte, lt, neq, like, ilike },
+      not,
     )
   }
 }
@@ -363,7 +373,7 @@ export function makePartitionedGetItems<
 >(client: SupabaseClientType<DB>, name: T, partitionField: string, softDeleteMode: SoftDeleteMode, schema?: string) {
   return function getItems(
     partitionKey: K,
-    { where, is, wherein, order, gte, gt, lte, lt, neq, like, ilike }: GetItemsParams<TableRow<T, DB, S>> = {},
+    { where, is, wherein, order, gte, gt, lte, lt, neq, like, ilike, not }: GetItemsParams<TableRow<T, DB, S>> = {},
   ) {
     const whereConditions = buildWhereWithPartition(partitionField, partitionKey, where)
     return createGetItemsQuery<T, DB, S>(
@@ -376,6 +386,7 @@ export function makePartitionedGetItems<
       softDeleteMode,
       schema,
       { gte, gt, lte, lt, neq, like, ilike },
+      not,
     )
   }
 }

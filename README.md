@@ -128,7 +128,46 @@ const selectedPosts = await query(supabase, "posts", {
 const drafts = await query(supabase, "posts", {
   published_at: { is: null },
 }).many()
+
+// IS NOT NULL checks (using NOT operator)
+const publishedPosts = await query(supabase, "posts", {
+  not: { is: { published_at: null } },
+}).many()
+
+// NOT IN queries
+const activePosts = await query(supabase, "posts", {
+  not: { in: { status: ["draft", "archived"] } },
+}).many()
 ```
+
+### NOT Operator
+
+The `not` operator follows Supabase conventions for negating conditions:
+
+```typescript
+// IS NOT NULL - find posts with external_id set
+const linkedPosts = await PostEntity.getItems({
+  not: { is: { external_id: null } },
+}).many()
+
+// IS NOT TRUE / IS NOT FALSE
+const nonFeatured = await PostEntity.getItems({
+  not: { is: { featured: true } },
+}).many()
+
+// NOT IN - exclude specific statuses
+const visiblePosts = await PostEntity.getItems({
+  not: { in: { status: ["spam", "trash", "deleted"] } },
+}).many()
+
+// Combine NOT with other conditions
+const activeLinkedPosts = await PostEntity.getItems({
+  where: { status: "published" },
+  not: { is: { external_id: null } },
+}).many()
+```
+
+> **Note**: `neq: null` is deprecated. Use `not: { is: { field: null } }` instead for IS NOT NULL checks.
 
 ### Chaining OR Conditions
 
