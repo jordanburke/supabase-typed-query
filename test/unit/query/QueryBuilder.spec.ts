@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { createMockSupabaseClient } from "../../helpers/mock-client"
 
@@ -254,35 +254,28 @@ describe("QueryBuilder", () => {
   })
 
   describe("Query Building", () => {
-    it("should call from with correct table name", () => {
+    it("should call from with correct table name", async () => {
       const config = testConfig({
         table: "users",
         conditions: [{ where: { id: "test-id" } }],
       })
 
-      void QueryBuilder(mockClient, config).many()
+      await QueryBuilder(mockClient, config).many().run()
 
       expect(mockClient.from).toHaveBeenCalledWith("users")
     })
 
-    it("should build query with where conditions", () => {
-      const fromSpy = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        match: vi.fn().mockReturnThis(),
-        is: vi.fn().mockReturnThis(),
-        then: vi.fn().mockResolvedValue({ data: [], error: null }),
-      })
-
-      const client = { from: fromSpy } as unknown as SupabaseClientType
+    it("should build query with where conditions", async () => {
+      const client = createMockSupabaseClient({ data: [] })
 
       const config = testConfig({
         table: "users",
         conditions: [{ where: { name: "Test User" } }],
       })
 
-      QueryBuilder(client, config).many()
+      await QueryBuilder(client, config).many().run()
 
-      expect(fromSpy).toHaveBeenCalledWith("users")
+      expect(client.from).toHaveBeenCalledWith("users")
     })
   })
 })

@@ -39,8 +39,9 @@ describe("Query Functional Operations", () => {
       const result = await query(client, "users", { id: "1" })
         .map((user) => user.name)
         .one()
+        .run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
     })
 
     it("should work with first() method", async () => {
@@ -50,8 +51,9 @@ describe("Query Functional Operations", () => {
       const result = await query(client, "users", {})
         .map((user) => user.name)
         .first()
+        .run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
     })
   })
 

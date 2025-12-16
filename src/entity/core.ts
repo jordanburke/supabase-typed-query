@@ -23,7 +23,7 @@ import type {
   TableUpdate,
 } from "@/types"
 
-import type { FPromise, List, TaskOutcome } from "functype"
+import type { IOTask as Task, List } from "functype"
 
 import type {
   DeleteItemParams,
@@ -191,9 +191,7 @@ export function createAddItemsMutation<
   schema?: string,
 ): MutationMultiExecution<TableRow<T, DB, S>> {
   return MultiMutationQuery(
-    addEntities<T, DB>(client, name, items as TableRow<T, DB>[], schema) as FPromise<
-      TaskOutcome<List<TableRow<T, DB, S>>>
-    >,
+    addEntities<T, DB>(client, name, items as TableRow<T, DB>[], schema) as Task<Error, List<TableRow<T, DB, S>>>,
   )
 }
 
@@ -222,7 +220,7 @@ export function createUpdateItemMutation<
       is as IsParams<TableRow<T, DB>>["is"],
       wherein as WhereinParams<TableRow<T, DB>>["wherein"],
       schema,
-    ) as FPromise<TaskOutcome<TableRow<T, DB, S>>>,
+    ) as Task<Error, TableRow<T, DB, S>>,
   )
 }
 
@@ -253,7 +251,7 @@ export function createUpdateItemsMutation<
       is as IsParams<TableRow<T, DB>>["is"],
       wherein as WhereinParams<TableRow<T, DB>>["wherein"],
       schema,
-    ) as FPromise<TaskOutcome<List<TableRow<T, DB, S>>>>,
+    ) as Task<Error, List<TableRow<T, DB, S>>>,
   )
 }
 
@@ -281,7 +279,7 @@ export function createUpsertItemsMutation<
       undefined,
       undefined,
       schema,
-    ) as FPromise<TaskOutcome<List<TableRow<T, DB, S>>>>,
+    ) as Task<Error, List<TableRow<T, DB, S>>>,
   )
 }
 
@@ -570,7 +568,7 @@ export function createDeleteItemMutation<
         wherein as WhereinParams<TableRow<T, DB>>["wherein"],
         schema,
       )
-  return SingleMutationQuery(operation as FPromise<TaskOutcome<TableRow<T, DB, S>>>)
+  return SingleMutationQuery(operation as Task<Error, TableRow<T, DB, S>>)
 }
 
 /**
@@ -606,7 +604,7 @@ export function createDeleteItemsMutation<
         wherein as WhereinParams<TableRow<T, DB>>["wherein"],
         schema,
       )
-  return MultiMutationQuery(operation as FPromise<TaskOutcome<List<TableRow<T, DB, S>>>>)
+  return MultiMutationQuery(operation as Task<Error, List<TableRow<T, DB, S>>>)
 }
 
 // =============================================================================

@@ -91,8 +91,8 @@ export type {
 export { Entity, MultiMutationQuery, PartitionedEntity, SingleMutationQuery } from "./entity"
 
 // Re-export functype utilities that are commonly used with this library
-export type { FPromise, TaskOutcome } from "functype"
-export { Err, List, Ok, Option } from "functype"
+export type { IOTask as Task } from "functype"
+export { IO, List, Option } from "functype"
 
 // Error utilities
 export type { SupabaseErrorObject } from "./utils/errors"

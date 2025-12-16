@@ -1,6 +1,6 @@
 import type { EmptyObject } from "@/types"
 
-import type { Brand, FPromise, List, Option, TaskOutcome } from "functype"
+import type { Brand, IOTask as Task, List, Option } from "functype"
 
 // Comparison operators for advanced queries
 export type ComparisonOperators<V> = {
@@ -66,8 +66,8 @@ export type SoftDeleteMode = "include" | "exclude" | "only"
  * Base execution interface that all database operations implement
  */
 export interface ExecutableQuery<T> {
-  // TaskOutcome version (for explicit error handling)
-  execute(): FPromise<TaskOutcome<T>>
+  // Task version - lazy, returns Either on .run() (for explicit error handling)
+  execute(): Task<Error, T>
 
   // OrThrow version (for simple error handling)
   executeOrThrow(): Promise<T>
@@ -77,7 +77,7 @@ export interface ExecutableQuery<T> {
  * Standard interface for operations that return a single result
  */
 export interface SingleExecution<T> extends ExecutableQuery<Option<T>> {
-  one(): FPromise<TaskOutcome<Option<T>>>
+  one(): Task<Error, Option<T>>
   oneOrThrow(): Promise<T>
 }
 
@@ -85,7 +85,7 @@ export interface SingleExecution<T> extends ExecutableQuery<Option<T>> {
  * Standard interface for operations that return multiple results
  */
 export interface MultiExecution<T> extends ExecutableQuery<List<T>> {
-  many(): FPromise<TaskOutcome<List<T>>>
+  many(): Task<Error, List<T>>
   manyOrThrow(): Promise<List<T>>
 }
 
@@ -108,12 +108,12 @@ export type BrandedFieldValue<T> = T extends Brand<string, infer BaseType> ? T |
  * @typeParam Row - The row type for the table
  */
 export interface Query<Row extends object> {
-  // Execution methods - explicit about expected results
-  one(): FPromise<TaskOutcome<Option<Row>>>
-  many(): FPromise<TaskOutcome<List<Row>>>
-  first(): FPromise<TaskOutcome<Option<Row>>>
+  // Execution methods - lazy Task that returns Either on .run()
+  one(): Task<Error, Option<Row>>
+  many(): Task<Error, List<Row>>
+  first(): Task<Error, Option<Row>>
 
-  // OrThrow methods - throw errors instead of returning TaskOutcome (v0.8.0+)
+  // OrThrow methods - throw errors instead of returning Task
   oneOrThrow(): Promise<Row>
   manyOrThrow(): Promise<List<Row>>
   firstOrThrow(): Promise<Row>
@@ -141,11 +141,11 @@ export interface Query<Row extends object> {
 
 // Mapped query for transformed results
 export interface MappedQuery<U> {
-  one(): FPromise<TaskOutcome<Option<U>>>
-  many(): FPromise<TaskOutcome<List<U>>>
-  first(): FPromise<TaskOutcome<Option<U>>>
+  one(): Task<Error, Option<U>>
+  many(): Task<Error, List<U>>
+  first(): Task<Error, Option<U>>
 
-  // OrThrow methods - throw errors instead of returning TaskOutcome (v0.8.0+)
+  // OrThrow methods - throw errors instead of returning Task
   oneOrThrow(): Promise<U>
   manyOrThrow(): Promise<List<U>>
   firstOrThrow(): Promise<U>
@@ -201,9 +201,9 @@ export interface EntityQuery<Row extends object> extends Query<Row> {
  * @typeParam Row - The row type
  */
 export interface NormalizedQuery<Row extends object> {
-  one(): FPromise<TaskOutcome<Option<Row>>>
-  many(): FPromise<TaskOutcome<List<Row>>>
-  first(): FPromise<TaskOutcome<Option<Row>>>
+  one(): Task<Error, Option<Row>>
+  many(): Task<Error, List<Row>>
+  first(): Task<Error, Option<Row>>
 }
 
 // =============================================================================

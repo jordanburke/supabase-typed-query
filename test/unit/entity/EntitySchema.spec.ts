@@ -29,7 +29,7 @@ describe("Entity Schema Support", () => {
       })
 
       // Execute query to trigger the schema call
-      await InventoryEntity.getItems().many()
+      await InventoryEntity.getItems().many().run()
 
       // Verify schema() was called with the custom schema
       expect(mockClient.schema).toHaveBeenCalledWith("inventory")
@@ -43,7 +43,7 @@ describe("Entity Schema Support", () => {
       })
 
       // Execute query
-      await UserEntity.getItems().many()
+      await UserEntity.getItems().many().run()
 
       // Verify from() was called directly (schema() should not be called)
       expect(mockClient.from).toHaveBeenCalledWith("users")
@@ -75,7 +75,7 @@ describe("Entity Schema Support", () => {
       })
 
       // Execute query
-      await TenantItemsEntity.getItems("tenant-123").many()
+      await TenantItemsEntity.getItems("tenant-123").many().run()
 
       // Verify schema() was called
       expect(mockClient.schema).toHaveBeenCalledWith("tenant_data")

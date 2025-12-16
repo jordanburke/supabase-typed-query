@@ -373,7 +373,9 @@ describe("Entity", () => {
 
       const UserEntity = Entity(mockClient, "users", { softDelete: false })
 
-      await UserEntity.deleteItem({ where: { id: "user-123" } }).execute()
+      await UserEntity.deleteItem({ where: { id: "user-123" } })
+        .execute()
+        .run()
 
       expect(mockClient.from).toHaveBeenCalledWith("users")
       expect(deleteSpy).toHaveBeenCalled()
@@ -399,7 +401,9 @@ describe("Entity", () => {
 
       const UserEntity = Entity(mockClient, "users", { softDelete: true })
 
-      await UserEntity.deleteItem({ where: { id: "user-123" } }).execute()
+      await UserEntity.deleteItem({ where: { id: "user-123" } })
+        .execute()
+        .run()
 
       expect(mockClient.from).toHaveBeenCalledWith("users")
       expect(updateSpy).toHaveBeenCalled()
@@ -444,7 +448,9 @@ describe("Entity", () => {
 
       const UserEntity = Entity(mockClient, "users", { softDelete: false })
 
-      await UserEntity.deleteItems({ where: { status: "inactive" } }).execute()
+      await UserEntity.deleteItems({ where: { status: "inactive" } })
+        .execute()
+        .run()
 
       expect(mockClient.from).toHaveBeenCalledWith("users")
       expect(deleteSpy).toHaveBeenCalled()
@@ -471,7 +477,9 @@ describe("Entity", () => {
 
       const UserEntity = Entity(mockClient, "users", { softDelete: true })
 
-      await UserEntity.deleteItems({ where: { status: "inactive" } }).execute()
+      await UserEntity.deleteItems({ where: { status: "inactive" } })
+        .execute()
+        .run()
 
       expect(mockClient.from).toHaveBeenCalledWith("users")
       expect(updateSpy).toHaveBeenCalled()

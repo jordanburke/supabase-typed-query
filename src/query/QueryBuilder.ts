@@ -1,8 +1,8 @@
 import type { Database, DatabaseSchema, SupabaseClientType, TableNames, TableRow } from "@/types"
 import { toError } from "@/utils/errors"
 
-import type { Brand, FPromise, TaskOutcome } from "functype"
-import { Err, List, Ok, Option } from "functype"
+import type { Brand, IOTask as Task } from "functype"
+import { IO, List, Option } from "functype"
 
 import type { IsConditions, MappedQuery, Query, QueryBuilderConfig, QueryCondition, WhereConditions } from "./Query"
 
@@ -21,13 +21,6 @@ const TABLES_WITHOUT_DELETED = new Set<string>([])
 /**
  * Functional QueryBuilder implementation using closures instead of classes
  */
-// Helper to wrap async operations with error handling
-const wrapAsync = <T>(fn: () => Promise<TaskOutcome<T>>): FPromise<TaskOutcome<T>> => {
-  // FPromise in newer functype versions is just a promise with additional methods
-  // We can use the FPromise constructor if available, or cast it
-  return fn() as unknown as FPromise<TaskOutcome<T>>
-}
-
 export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
   config: QueryBuilderConfig<TableRow<T, DB>>,
@@ -577,79 +570,45 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
     /**
      * Execute query expecting exactly one result
      */
-    one: (): FPromise<TaskOutcome<Option<Row>>> => {
-      return wrapAsync(async () => {
-        try {
-          const query = buildSupabaseQuery()
-          const { data, error } = await query.single()
-
-          if (error) {
-            log.error(`Error getting ${config.table} item: ${toError(error).toString()}`)
-            return Err<Option<Row>>(toError(error))
-          }
-
-          const result = data as Row
-          const filteredResult = config.filterFn ? config.filterFn(result) : true
-
-          if (!filteredResult) {
-            return Ok(Option.none<Row>())
-          }
-
-          return Ok(Option(result))
-        } catch (error) {
-          log.error(`Error executing single query on ${config.table}: ${toError(error).toString()}`)
-          return Err<Option<Row>>(toError(error))
-        }
-      })
+    one: (): Task<Error, Option<Row>> => {
+      return IO.tryAsync<Option<Row>, Error>(async () => {
+        const query = buildSupabaseQuery()
+        const { data, error } = await query.single()
+        if (error) throw toError(error)
+        const result = data as Row
+        const passes = config.filterFn ? config.filterFn(result) : true
+        return passes ? Option(result) : Option.none<Row>()
+      }, toError).tapError((err) => log.error(`Error getting ${config.table} item: ${err}`))
     },
 
     /**
      * Execute query expecting zero or more results
      */
-    many: (): FPromise<TaskOutcome<List<Row>>> => {
-      return wrapAsync(async () => {
-        try {
-          const query = buildSupabaseQuery()
-          const { data, error } = await query
-
-          if (error) {
-            log.error(`Error getting ${config.table} items: ${toError(error).toString()}`)
-            return Err<List<Row>>(toError(error))
-          }
-
-          const rawResults = data as Row[]
-
-          // Apply filter if present
-          const results = config.filterFn ? rawResults.filter(config.filterFn) : rawResults
-
-          return Ok(List(results))
-        } catch (error) {
-          log.error(`Error executing multi query on ${config.table}: ${toError(error).toString()}`)
-          return Err<List<Row>>(toError(error))
-        }
-      })
+    many: (): Task<Error, List<Row>> => {
+      return IO.tryAsync<List<Row>, Error>(async () => {
+        const query = buildSupabaseQuery()
+        const { data, error } = await query
+        if (error) throw toError(error)
+        const rawResults = data as Row[]
+        const results = config.filterFn ? rawResults.filter(config.filterFn) : rawResults
+        return List(results)
+      }, toError).tapError((err) => log.error(`Error getting ${config.table} items: ${err}`))
     },
 
     /**
      * Execute query expecting first result from potentially multiple
      */
-    first: (): FPromise<TaskOutcome<Option<Row>>> => {
-      return wrapAsync(async () => {
-        const manyResult = await QueryBuilder<T, DB>(client, config).many()
-        const list = manyResult.orThrow()
-        if (list.isEmpty) {
-          return Ok(Option.none<Row>())
-        }
-        return Ok(Option(list.head))
-      })
+    first: (): Task<Error, Option<Row>> => {
+      return QueryBuilder<T, DB>(client, config)
+        .many()
+        .map((list) => (list.isEmpty ? Option.none<Row>() : Option(list.head)))
     },
 
     /**
      * Execute query expecting exactly one result, throw if error or not found
      */
     oneOrThrow: async (): Promise<Row> => {
-      const result = await QueryBuilder<T, DB>(client, config).one()
-      const option = result.orThrow()
+      const option = await QueryBuilder<T, DB>(client, config).one().runOrThrow()
       return option.orThrow(new Error(`No record found in ${config.table}`))
     },
 
@@ -657,16 +616,14 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
      * Execute query expecting zero or more results, throw if error
      */
     manyOrThrow: async (): Promise<List<Row>> => {
-      const result = await QueryBuilder<T, DB>(client, config).many()
-      return result.orThrow()
+      return QueryBuilder<T, DB>(client, config).many().runOrThrow()
     },
 
     /**
      * Execute query expecting first result, throw if error or empty
      */
     firstOrThrow: async (): Promise<Row> => {
-      const result = await QueryBuilder<T, DB>(client, config).first()
-      const option = result.orThrow()
+      const option = await QueryBuilder<T, DB>(client, config).first().runOrThrow()
       return option.orThrow(new Error(`No records found in ${config.table}`))
     },
   }
@@ -690,42 +647,33 @@ const createMappedQuery = <T extends TableNames<DB>, DB extends DatabaseSchema =
       return createMappedQuery<T, DB, U>(filteredQuery, mapFn)
     },
 
-    one: (): FPromise<TaskOutcome<Option<U>>> => {
-      return wrapAsync(async () => {
-        const maybeItemResult = await sourceQuery.one()
-        const maybeItem = maybeItemResult.orThrow()
-        return maybeItem.fold(
-          () => Ok(Option.none<U>()),
-          (item) => Ok(Option(mapFn(item))),
-        )
-      })
+    one: (): Task<Error, Option<U>> => {
+      return sourceQuery.one().map((maybeItem) =>
+        maybeItem.fold(
+          () => Option.none<U>(),
+          (item) => Option(mapFn(item)),
+        ),
+      )
     },
 
-    many: (): FPromise<TaskOutcome<List<U>>> => {
-      return wrapAsync(async () => {
-        const itemsResult = await sourceQuery.many()
-        const items = itemsResult.orThrow()
-        return Ok(items.map(mapFn))
-      })
+    many: (): Task<Error, List<U>> => {
+      return sourceQuery.many().map((items) => items.map(mapFn))
     },
 
-    first: (): FPromise<TaskOutcome<Option<U>>> => {
-      return wrapAsync(async () => {
-        const maybeItemResult = await sourceQuery.first()
-        const maybeItem = maybeItemResult.orThrow()
-        return maybeItem.fold(
-          () => Ok(Option.none<U>()),
-          (item) => Ok(Option(mapFn(item))),
-        )
-      })
+    first: (): Task<Error, Option<U>> => {
+      return sourceQuery.first().map((maybeItem) =>
+        maybeItem.fold(
+          () => Option.none<U>(),
+          (item) => Option(mapFn(item)),
+        ),
+      )
     },
 
     /**
      * Execute mapped query expecting exactly one result, throw if error or not found
      */
     oneOrThrow: async (): Promise<U> => {
-      const result = await createMappedQuery(sourceQuery, mapFn).one()
-      const option = result.orThrow()
+      const option = await createMappedQuery(sourceQuery, mapFn).one().runOrThrow()
       return option.orThrow(new Error(`No record found`))
     },
 
@@ -733,16 +681,14 @@ const createMappedQuery = <T extends TableNames<DB>, DB extends DatabaseSchema =
      * Execute mapped query expecting zero or more results, throw if error
      */
     manyOrThrow: async (): Promise<List<U>> => {
-      const result = await createMappedQuery(sourceQuery, mapFn).many()
-      return result.orThrow()
+      return createMappedQuery(sourceQuery, mapFn).many().runOrThrow()
     },
 
     /**
      * Execute mapped query expecting first result, throw if error or empty
      */
     firstOrThrow: async (): Promise<U> => {
-      const result = await createMappedQuery(sourceQuery, mapFn).first()
-      const option = result.orThrow()
+      const option = await createMappedQuery(sourceQuery, mapFn).first().runOrThrow()
       return option.orThrow(new Error(`No records found`))
     },
   }

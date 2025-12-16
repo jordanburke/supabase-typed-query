@@ -6,13 +6,13 @@ import { rpc } from "@/query"
 
 describe("RPC (Remote Procedure Call)", () => {
   describe("one() method", () => {
-    it("should return TaskOutcome<Option<T>> with data", async () => {
+    it("should return Either<Error, Option<T>> with data", async () => {
       const mockData = { total: 100, active: 50, inactive: 50 }
       const client = createMockClientWithData(mockData)
 
-      const result = await rpc(client, "get_user_stats", { user_id: "123" }).one()
+      const result = await rpc(client, "get_user_stats", { user_id: "123" }).one().run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
       const optionResult = result.orThrow()
       expect(optionResult.isSome()).toBe(true)
       expect(optionResult.orElse(null)).toEqual(mockData)
@@ -25,9 +25,9 @@ describe("RPC (Remote Procedure Call)", () => {
       ]
       const client = createMockClientWithData(mockData)
 
-      const result = await rpc(client, "search_items", { query: "test" }).one()
+      const result = await rpc(client, "search_items", { query: "test" }).one().run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
       const optionResult = result.orThrow()
       expect(optionResult.isSome()).toBe(true)
       expect(optionResult.orElse(null)).toEqual({ id: "1", name: "Result 1" })
@@ -36,9 +36,9 @@ describe("RPC (Remote Procedure Call)", () => {
     it("should return empty Option when no data returned", async () => {
       const client = createMockClientWithData(null)
 
-      const result = await rpc(client, "get_user_stats", { user_id: "999" }).one()
+      const result = await rpc(client, "get_user_stats", { user_id: "999" }).one().run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
       const optionResult = result.orThrow()
       expect(optionResult.isEmpty).toBe(true)
     })
@@ -46,20 +46,20 @@ describe("RPC (Remote Procedure Call)", () => {
     it("should return empty Option when empty array returned", async () => {
       const client = createMockClientWithData([])
 
-      const result = await rpc(client, "search_items", { query: "nonexistent" }).one()
+      const result = await rpc(client, "search_items", { query: "nonexistent" }).one().run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
       const optionResult = result.orThrow()
       expect(optionResult.isEmpty).toBe(true)
     })
 
-    it("should return Err when RPC call fails", async () => {
+    it("should return Left when RPC call fails", async () => {
       const mockError = { message: "Function not found", code: "42883" }
       const client = createMockClientWithError(mockError)
 
-      const result = await rpc(client, "nonexistent_function", {}).one()
+      const result = await rpc(client, "nonexistent_function", {}).one().run()
 
-      expect(result.isErr()).toBe(true)
+      expect(result.isLeft()).toBe(true)
     })
   })
 
@@ -94,7 +94,7 @@ describe("RPC (Remote Procedure Call)", () => {
   })
 
   describe("many() method", () => {
-    it("should return TaskOutcome<List<T>> with data", async () => {
+    it("should return Either<Error, List<T>> with data", async () => {
       const mockData = [
         { id: "1", name: "Item 1" },
         { id: "2", name: "Item 2" },
@@ -102,9 +102,9 @@ describe("RPC (Remote Procedure Call)", () => {
       ]
       const client = createMockClientWithData(mockData)
 
-      const result = await rpc(client, "search_items", { query: "test" }).many()
+      const result = await rpc(client, "search_items", { query: "test" }).many().run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
       const list = result.orThrow()
       expect(list.length).toBe(3)
       expect(list.toArray()).toEqual(mockData)
@@ -114,9 +114,9 @@ describe("RPC (Remote Procedure Call)", () => {
       const mockData = { total: 100 }
       const client = createMockClientWithData(mockData)
 
-      const result = await rpc(client, "get_count", {}).many()
+      const result = await rpc(client, "get_count", {}).many().run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
       const list = result.orThrow()
       expect(list.length).toBe(1)
       expect(list.head).toEqual(mockData)
@@ -125,9 +125,9 @@ describe("RPC (Remote Procedure Call)", () => {
     it("should return empty List when no data returned", async () => {
       const client = createMockClientWithData(null)
 
-      const result = await rpc(client, "search_items", {}).many()
+      const result = await rpc(client, "search_items", {}).many().run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
       const list = result.orThrow()
       expect(list.isEmpty).toBe(true)
     })
@@ -135,20 +135,20 @@ describe("RPC (Remote Procedure Call)", () => {
     it("should return empty List when empty array returned", async () => {
       const client = createMockClientWithData([])
 
-      const result = await rpc(client, "search_items", { query: "nonexistent" }).many()
+      const result = await rpc(client, "search_items", { query: "nonexistent" }).many().run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
       const list = result.orThrow()
       expect(list.isEmpty).toBe(true)
     })
 
-    it("should return Err when RPC call fails", async () => {
+    it("should return Left when RPC call fails", async () => {
       const mockError = { message: "Permission denied" }
       const client = createMockClientWithError(mockError)
 
-      const result = await rpc(client, "restricted_function", {}).many()
+      const result = await rpc(client, "restricted_function", {}).many().run()
 
-      expect(result.isErr()).toBe(true)
+      expect(result.isLeft()).toBe(true)
     })
   })
 
@@ -183,21 +183,21 @@ describe("RPC (Remote Procedure Call)", () => {
   })
 
   describe("Error Handling", () => {
-    it("should wrap errors in TaskOutcome", async () => {
+    it("should wrap errors in Either", async () => {
       const mockError = { message: "Network error", code: "NETWORK_ERROR" }
       const client = createMockClientWithError(mockError)
 
-      const result = await rpc(client, "any_function", {}).many()
+      const result = await rpc(client, "any_function", {}).many().run()
 
-      expect(result.isErr()).toBe(true)
-      expect(result.isOk()).toBe(false)
+      expect(result.isLeft()).toBe(true)
+      expect(result.isRight()).toBe(false)
     })
 
     it("should allow error pattern matching with fold", async () => {
       const mockError = { message: "Function not found" }
       const client = createMockClientWithError(mockError)
 
-      const result = await rpc(client, "nonexistent", {}).one()
+      const result = await rpc(client, "nonexistent", {}).one().run()
 
       const handled = result.fold(
         (error) => `Error: ${error.message}`,
@@ -213,7 +213,7 @@ describe("RPC (Remote Procedure Call)", () => {
       const mockData = { result: "success" }
       const client = createMockClientWithData(mockData)
 
-      await rpc(client, "process_data", { input: "test", limit: 10 }).one()
+      await rpc(client, "process_data", { input: "test", limit: 10 }).one().run()
 
       // Verify rpc was called with correct function name and args
       expect(client.rpc).toHaveBeenCalledWith("process_data", { input: "test", limit: 10 }, { count: undefined })
@@ -223,7 +223,7 @@ describe("RPC (Remote Procedure Call)", () => {
       const mockData = { result: "success" }
       const client = createMockClientWithData(mockData)
 
-      await rpc(client, "get_all_items").one()
+      await rpc(client, "get_all_items").one().run()
 
       expect(client.rpc).toHaveBeenCalledWith("get_all_items", {}, { count: undefined })
     })
@@ -232,7 +232,7 @@ describe("RPC (Remote Procedure Call)", () => {
       const mockData = [{ id: "1" }]
       const client = createMockClientWithData(mockData)
 
-      await rpc(client, "search_items", { query: "test" }, { count: "exact" }).many()
+      await rpc(client, "search_items", { query: "test" }, { count: "exact" }).many().run()
 
       expect(client.rpc).toHaveBeenCalledWith("search_items", { query: "test" }, { count: "exact" })
     })

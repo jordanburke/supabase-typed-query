@@ -6,13 +6,13 @@ import { query } from "@/query"
 
 describe("Query Execution Methods", () => {
   describe("one() method", () => {
-    it("should return TaskOutcome<Option<T>> with data", async () => {
+    it("should return Either<Error, Option<T>> with data", async () => {
       const mockData = { id: "1", name: "Test User", email: "test@example.com" }
       const client = createMockClientWithData(mockData)
 
-      const result = await query(client, "users", { id: "1" }).one()
+      const result = await query(client, "users", { id: "1" }).one().run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
       const optionResult = result.orThrow()
       expect(optionResult.isSome()).toBe(true)
     })
@@ -20,20 +20,20 @@ describe("Query Execution Methods", () => {
     it("should return empty Option when no data found", async () => {
       const client = createMockClientWithData(null)
 
-      const result = await query(client, "users", { id: "999" }).one()
+      const result = await query(client, "users", { id: "999" }).one().run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
       const optionResult = result.orThrow()
       expect(optionResult.isEmpty).toBe(true)
     })
 
-    it("should return Err when query fails", async () => {
+    it("should return Left when query fails", async () => {
       const mockError = { message: "Database error", code: "42P01" }
       const client = createMockClientWithError(mockError)
 
-      const result = await query(client, "users", { id: "1" }).one()
+      const result = await query(client, "users", { id: "1" }).one().run()
 
-      expect(result.isErr()).toBe(true)
+      expect(result.isLeft()).toBe(true)
     })
   })
 
@@ -63,16 +63,16 @@ describe("Query Execution Methods", () => {
   })
 
   describe("many() method", () => {
-    it("should return TaskOutcome<List<T>> with data", async () => {
+    it("should return Either<Error, List<T>> with data", async () => {
       const mockData = [
         { id: "1", name: "User 1" },
         { id: "2", name: "User 2" },
       ]
       const client = createMockClientWithData(mockData)
 
-      const result = await query(client, "users", { active: true }).many()
+      const result = await query(client, "users", { active: true }).many().run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
       const list = result.orThrow()
       expect(Array.isArray(list.toArray())).toBe(true)
       expect(list.length).toBe(2)
@@ -81,20 +81,20 @@ describe("Query Execution Methods", () => {
     it("should return empty List when no data found", async () => {
       const client = createMockClientWithData([])
 
-      const result = await query(client, "users", { deleted: null }).many()
+      const result = await query(client, "users", { deleted: null }).many().run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
       const list = result.orThrow()
       expect(list.isEmpty).toBe(true)
     })
 
-    it("should return Err when query fails", async () => {
+    it("should return Left when query fails", async () => {
       const mockError = { message: "Database error" }
       const client = createMockClientWithError(mockError)
 
-      const result = await query(client, "users", {}).many()
+      const result = await query(client, "users", {}).many().run()
 
-      expect(result.isErr()).toBe(true)
+      expect(result.isLeft()).toBe(true)
     })
   })
 
@@ -137,9 +137,9 @@ describe("Query Execution Methods", () => {
       ]
       const client = createMockClientWithData(mockData)
 
-      const result = await query(client, "users", {}).first()
+      const result = await query(client, "users", {}).first().run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
       const optionResult = result.orThrow()
       expect(optionResult.isSome()).toBe(true)
     })
@@ -147,23 +147,20 @@ describe("Query Execution Methods", () => {
     it("should return empty Option when no results", async () => {
       const client = createMockClientWithData([])
 
-      const result = await query(client, "users", {}).first()
+      const result = await query(client, "users", {}).first().run()
 
-      expect(result.isOk()).toBe(true)
+      expect(result.isRight()).toBe(true)
       const optionResult = result.orThrow()
       expect(optionResult.isEmpty).toBe(true)
     })
 
-    it("should return Err when query fails", async () => {
+    it("should return Left when query fails", async () => {
       const mockError = { message: "Database error" }
       const client = createMockClientWithError(mockError)
 
-      try {
-        await query(client, "users", {}).first()
-        expect.fail("Should have thrown an error")
-      } catch (error) {
-        expect(error).toBeDefined()
-      }
+      const result = await query(client, "users", {}).first().run()
+
+      expect(result.isLeft()).toBe(true)
     })
   })
 
@@ -195,22 +192,22 @@ describe("Query Execution Methods", () => {
     })
   })
 
-  describe("Error Handling with TaskOutcome", () => {
-    it("should wrap errors in TaskOutcome", async () => {
+  describe("Error Handling with Either", () => {
+    it("should wrap errors in Either", async () => {
       const mockError = { message: "Network error", code: "NETWORK_ERROR" }
       const client = createMockClientWithError(mockError)
 
-      const result = await query(client, "users", {}).many()
+      const result = await query(client, "users", {}).many().run()
 
-      expect(result.isErr()).toBe(true)
-      expect(result.isOk()).toBe(false)
+      expect(result.isLeft()).toBe(true)
+      expect(result.isRight()).toBe(false)
     })
 
     it("should allow error pattern matching", async () => {
       const mockError = { message: "Not found" }
       const client = createMockClientWithError(mockError)
 
-      const result = await query(client, "users", { id: "999" }).one()
+      const result = await query(client, "users", { id: "999" }).one().run()
 
       const handled = result.fold(
         (error) => `Error: ${error.message}`,

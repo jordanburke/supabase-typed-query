@@ -14,7 +14,7 @@ import type {
   TableUpdate,
 } from "@/types"
 
-import type { Brand, FPromise, List, TaskOutcome } from "functype"
+import type { Brand, IOTask as Task, List } from "functype"
 import { Option } from "functype"
 
 // =============================================================================
@@ -196,50 +196,44 @@ export type DeleteItemsParams<Row extends object = EmptyObject> = {
 /**
  * Wrapper type for multi-result mutation operations that implements standard execution interface
  */
-export type MutationMultiExecution<T> = FPromise<TaskOutcome<List<T>>> & MultiExecution<T>
+export type MutationMultiExecution<T> = MultiExecution<T>
 
 /**
  * Wrapper type for single-result mutation operations that implements standard execution interface
  */
-export type MutationSingleExecution<T> = FPromise<TaskOutcome<T>> & SingleExecution<T>
+export type MutationSingleExecution<T> = SingleExecution<T>
 
 /**
  * Creates a multi-result mutation query that implements the standard execution interface
  */
-export function MultiMutationQuery<T>(promise: FPromise<TaskOutcome<List<T>>>): MutationMultiExecution<T> {
-  const result = Object.assign(promise, {
-    many: () => promise,
+export function MultiMutationQuery<T>(task: Task<Error, List<T>>): MutationMultiExecution<T> {
+  return {
+    many: () => task,
     manyOrThrow: async (): Promise<List<T>> => {
-      const taskResult = await promise
-      return taskResult.orThrow()
+      return task.runOrThrow()
     },
-    execute: () => promise,
+    execute: () => task,
     executeOrThrow: async (): Promise<List<T>> => {
-      const taskResult = await promise
-      return taskResult.orThrow()
+      return task.runOrThrow()
     },
-  })
-  return result as MutationMultiExecution<T>
+  }
 }
 
 /**
  * Creates a single-result mutation query that implements the standard execution interface
  */
-export function SingleMutationQuery<T>(promise: FPromise<TaskOutcome<T>>): MutationSingleExecution<T> {
-  const result = Object.assign(promise, {
-    one: () => promise.then((outcome: TaskOutcome<T>) => outcome.map((value: T) => Option(value))),
+export function SingleMutationQuery<T>(task: Task<Error, T>): MutationSingleExecution<T> {
+  return {
+    one: () => task.map((value: T) => Option(value)),
     oneOrThrow: async (): Promise<T> => {
-      const taskResult = await promise
-      return taskResult.orThrow()
+      return task.runOrThrow() as Promise<T>
     },
-    execute: () => promise.then((outcome: TaskOutcome<T>) => outcome.map((value: T) => Option(value))),
+    execute: () => task.map((value: T) => Option(value)),
     executeOrThrow: async (): Promise<Option<T>> => {
-      const taskResult = await promise
-      const value = taskResult.orThrow()
-      return Option(value)
+      const value = await task.runOrThrow()
+      return Option(value) as Option<T>
     },
-  })
-  return result as MutationSingleExecution<T>
+  }
 }
 
 // =============================================================================

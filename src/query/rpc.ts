@@ -27,8 +27,8 @@ import type {
 } from "@/types"
 import { toError } from "@/utils/errors"
 
-import type { FPromise, TaskOutcome } from "functype"
-import { Err, List, Ok, Option } from "functype"
+import type { IOTask as Task } from "functype"
+import { IO, List, Option } from "functype"
 
 // =============================================================================
 // RPC Execution Types
@@ -49,10 +49,11 @@ export type RpcOptions = {
  */
 export type RpcSingleExecution<T> = {
   /**
-   * Execute and return TaskOutcome<Option<T>>
+   * Execute and return Task<Error, Option<T>>
    * Returns None if no result, Some(value) if result exists
+   * Call .run() or .runOrThrow() to execute
    */
-  one: () => FPromise<TaskOutcome<Option<T>>>
+  one: () => Task<Error, Option<T>>
 
   /**
    * Execute and return T directly, throwing on error or no result
@@ -65,10 +66,11 @@ export type RpcSingleExecution<T> = {
  */
 export type RpcMultiExecution<T> = {
   /**
-   * Execute and return TaskOutcome<List<T>>
+   * Execute and return Task<Error, List<T>>
    * Returns empty List if no results
+   * Call .run() or .runOrThrow() to execute
    */
-  many: () => FPromise<TaskOutcome<List<T>>>
+  many: () => Task<Error, List<T>>
 
   /**
    * Execute and return List<T> directly, throwing on error
@@ -81,17 +83,6 @@ export type RpcMultiExecution<T> = {
  * Provides both single and multi-result execution methods
  */
 export type RpcExecution<T> = RpcSingleExecution<T> & RpcMultiExecution<T>
-
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-/**
- * Wraps an async operation to return FPromise<TaskOutcome<T>>
- */
-const wrapAsync = <T>(fn: () => Promise<TaskOutcome<T>>): FPromise<TaskOutcome<T>> => {
-  return fn() as unknown as FPromise<TaskOutcome<T>>
-}
 
 // =============================================================================
 // RPC Implementation
@@ -155,37 +146,29 @@ export const rpc = <
     })
   }
 
-  const one = (): FPromise<TaskOutcome<Option<ReturnType>>> =>
-    wrapAsync(async () => {
-      try {
-        const { data, error } = await executeRpc()
+  const one = (): Task<Error, Option<ReturnType>> =>
+    IO.tryAsync<Option<ReturnType>, Error>(async () => {
+      const { data, error } = await executeRpc()
+      if (error) throw toError(error)
 
-        if (error) {
-          return Err<Option<ReturnType>>(toError(error))
-        }
-
-        // Handle null/undefined data
-        if (data === null || data === undefined) {
-          return Ok(Option.none<ReturnType>())
-        }
-
-        // Handle array data - return first element
-        if (Array.isArray(data)) {
-          if (data.length === 0) {
-            return Ok(Option.none<ReturnType>())
-          }
-          return Ok(Option(data[0] as ReturnType))
-        }
-
-        return Ok(Option(data as ReturnType))
-      } catch (error) {
-        return Err<Option<ReturnType>>(toError(error))
+      // Handle null/undefined data
+      if (data === null || data === undefined) {
+        return Option.none<ReturnType>()
       }
-    })
+
+      // Handle array data - return first element
+      if (Array.isArray(data)) {
+        if (data.length === 0) {
+          return Option.none<ReturnType>()
+        }
+        return Option(data[0] as ReturnType)
+      }
+
+      return Option(data as ReturnType)
+    }, toError)
 
   const oneOrThrow = async (): Promise<ReturnType> => {
-    const result = await one()
-    const option = result.orThrow()
+    const option = await one().runOrThrow()
     return option.fold(
       () => {
         throw new Error("RPC call returned no result")
@@ -194,35 +177,27 @@ export const rpc = <
     )
   }
 
-  const many = (): FPromise<TaskOutcome<List<ReturnType>>> =>
-    wrapAsync(async () => {
-      try {
-        const { data, error } = await executeRpc()
+  const many = (): Task<Error, List<ReturnType>> =>
+    IO.tryAsync<List<ReturnType>, Error>(async () => {
+      const { data, error } = await executeRpc()
+      if (error) throw toError(error)
 
-        if (error) {
-          return Err<List<ReturnType>>(toError(error))
-        }
-
-        // Handle null/undefined data
-        if (data === null || data === undefined) {
-          return Ok(List<ReturnType>([]))
-        }
-
-        // Handle array data
-        if (Array.isArray(data)) {
-          return Ok(List(data as ReturnType[]))
-        }
-
-        // Single value - wrap in list
-        return Ok(List([data as ReturnType]))
-      } catch (error) {
-        return Err<List<ReturnType>>(toError(error))
+      // Handle null/undefined data
+      if (data === null || data === undefined) {
+        return List<ReturnType>([])
       }
-    })
+
+      // Handle array data
+      if (Array.isArray(data)) {
+        return List(data as ReturnType[])
+      }
+
+      // Single value - wrap in list
+      return List([data as ReturnType])
+    }, toError)
 
   const manyOrThrow = async (): Promise<List<ReturnType>> => {
-    const result = await many()
-    return result.orThrow()
+    return many().runOrThrow()
   }
 
   return {

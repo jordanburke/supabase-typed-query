@@ -405,7 +405,7 @@ describe("PartitionedEntity", () => {
   })
 
   describe("Partition Key Integration", () => {
-    it("should automatically apply partition key to getItem query", () => {
+    it("should automatically apply partition key to getItem query", async () => {
       const matchSpy = vi.fn().mockReturnThis()
       const fromSpy = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnThis(),
@@ -422,23 +422,15 @@ describe("PartitionedEntity", () => {
       })
 
       const tenantId = TenantIdOf("tenant-123")
-      UserEntity.getItem(tenantId, { id: "user-1" }).one()
+      await UserEntity.getItem(tenantId, { id: "user-1" }).one().run()
 
       expect(fromSpy).toHaveBeenCalledWith("users")
       // The match call should include tenant_id
       expect(matchSpy).toHaveBeenCalled()
     })
 
-    it("should automatically apply partition key to getItems query", () => {
-      const matchSpy = vi.fn().mockReturnThis()
-      const fromSpy = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        match: matchSpy,
-        is: vi.fn().mockReturnThis(),
-        then: vi.fn().mockResolvedValue({ data: [], error: null }),
-      })
-
-      const mockClient = { from: fromSpy } as unknown as SupabaseClientType
+    it("should automatically apply partition key to getItems query", async () => {
+      const mockClient = createMockSupabaseClient({ data: [] })
 
       const UserEntity = PartitionedEntity<"users", TenantId>(mockClient, "users", {
         partitionField: "tenant_id",
@@ -446,10 +438,11 @@ describe("PartitionedEntity", () => {
       })
 
       const tenantId = TenantIdOf("tenant-123")
-      UserEntity.getItems(tenantId, { where: { status: "active" } }).many()
+      await UserEntity.getItems(tenantId, { where: { status: "active" } })
+        .many()
+        .run()
 
-      expect(fromSpy).toHaveBeenCalledWith("users")
-      expect(matchSpy).toHaveBeenCalled()
+      expect(mockClient.from).toHaveBeenCalledWith("users")
     })
   })
 

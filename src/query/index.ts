@@ -10,8 +10,8 @@ import type {
 } from "@/types"
 import { toError } from "@/utils/errors"
 
-import type { FPromise, TaskOutcome } from "functype"
-import { Err, List, Ok } from "functype"
+import type { IOTask as Task } from "functype"
+import { IO, List } from "functype"
 
 import type { EntityWhereConditions, Query, WhereConditions } from "./Query"
 import { createQuery } from "./QueryBuilder"
@@ -47,11 +47,6 @@ export { rpc } from "./rpc"
 // Local type for IS conditions
 type IsConditionsLocal<T extends object = EmptyObject> = Partial<Record<keyof T, null | boolean>>
 
-// Helper to wrap async operations with error handling
-const wrapAsync = <T>(fn: () => Promise<TaskOutcome<T>>): FPromise<TaskOutcome<T>> => {
-  return fn() as unknown as FPromise<TaskOutcome<T>>
-}
-
 /**
  * Retrieves a single entity from the specified table.
  * @template T - The table name
@@ -61,7 +56,7 @@ const wrapAsync = <T>(fn: () => Promise<TaskOutcome<T>>): FPromise<TaskOutcome<T
  * @param where - Conditions to filter by
  * @param is - IS conditions to filter by
  * @param schema - Database schema to query (defaults to "public")
- * @returns A promise resolving to the entity if found
+ * @returns A Task resolving to the entity if found
  */
 export const getEntity = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
@@ -69,31 +64,23 @@ export const getEntity = <T extends TableNames<DB>, DB extends DatabaseSchema = 
   where: EntityWhereConditions<TableRow<T, DB>>,
   is?: IsConditionsLocal<TableRow<T, DB>>,
   schema?: string,
-): FPromise<TaskOutcome<TableRow<T, DB>>> =>
-  wrapAsync(async () => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const baseQuery = (tableQuery as any).select("*").match(where)
+): Task<Error, TableRow<T, DB>> =>
+  IO.tryAsync<TableRow<T, DB>, Error>(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const baseQuery = (tableQuery as any).select("*").match(where)
 
-      const queryWithIs = is
-        ? List(Object.entries(is)).foldLeft(baseQuery)((query, [column, value]) =>
-            query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
-          )
-        : baseQuery
+    const queryWithIs = is
+      ? List(Object.entries(is)).foldLeft(baseQuery)((query, [column, value]) =>
+          query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
+        )
+      : baseQuery
 
-      const { data, error } = await queryWithIs.single()
-
-      if (error) {
-        return Err<TableRow<T, DB>>(toError(error))
-      }
-
-      return Ok(data as TableRow<T, DB>)
-    } catch (error) {
-      return Err<TableRow<T, DB>>(toError(error))
-    }
-  })
+    const { data, error } = await queryWithIs.single()
+    if (error) throw toError(error)
+    return data as TableRow<T, DB>
+  }, toError)
 
 /**
  * Retrieves multiple entities from the specified table.
@@ -106,7 +93,7 @@ export const getEntity = <T extends TableNames<DB>, DB extends DatabaseSchema = 
  * @param wherein - WHERE IN conditions to filter by
  * @param order - Optional ordering parameters
  * @param schema - Database schema to query (defaults to "public")
- * @returns A promise resolving to the entities if found
+ * @returns A Task resolving to the entities if found
  */
 export const getEntities = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
@@ -119,39 +106,31 @@ export const getEntities = <T extends TableNames<DB>, DB extends DatabaseSchema 
     { ascending: true },
   ],
   schema?: string,
-): FPromise<TaskOutcome<List<TableRow<T, DB>>>> =>
-  wrapAsync(async () => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const baseQuery = (tableQuery as any).select("*").match(where)
+): Task<Error, List<TableRow<T, DB>>> =>
+  IO.tryAsync<List<TableRow<T, DB>>, Error>(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const baseQuery = (tableQuery as any).select("*").match(where)
 
-      const queryWithIn = wherein
-        ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
-            query.in(column, values as never),
-          )
-        : baseQuery
+    const queryWithIn = wherein
+      ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
+          query.in(column, values as never),
+        )
+      : baseQuery
 
-      const queryWithIs = is
-        ? List(Object.entries(is)).foldLeft(queryWithIn)((query, [column, value]) =>
-            query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
-          )
-        : queryWithIn
+    const queryWithIs = is
+      ? List(Object.entries(is)).foldLeft(queryWithIn)((query, [column, value]) =>
+          query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
+        )
+      : queryWithIn
 
-      const queryOrderBy = queryWithIs.order(order[0], order[1])
+    const queryOrderBy = queryWithIs.order(order[0], order[1])
 
-      const { data, error } = await queryOrderBy
-
-      if (error) {
-        return Err<List<TableRow<T, DB>>>(toError(error))
-      }
-
-      return Ok(List(data as TableRow<T, DB>[]))
-    } catch (error) {
-      return Err<List<TableRow<T, DB>>>(toError(error))
-    }
-  })
+    const { data, error } = await queryOrderBy
+    if (error) throw toError(error)
+    return List(data as TableRow<T, DB>[])
+  }, toError)
 
 /**
  * Adds multiple entities to the specified table.
@@ -161,30 +140,22 @@ export const getEntities = <T extends TableNames<DB>, DB extends DatabaseSchema 
  * @param table - The table to insert into
  * @param entities - The entities to add
  * @param schema - Database schema to query (defaults to "public")
- * @returns A promise resolving to the added entities
+ * @returns A Task resolving to the added entities
  */
 export const addEntities = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
   table: T,
   entities: TableInsert<T, DB>[],
   schema?: string,
-): FPromise<TaskOutcome<List<TableRow<T, DB>>>> =>
-  wrapAsync(async () => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (tableQuery as any).insert(entities as never).select()
-
-      if (error) {
-        return Err<List<TableRow<T, DB>>>(toError(error))
-      }
-
-      return Ok(List(data as unknown as TableRow<T, DB>[]))
-    } catch (error) {
-      return Err<List<TableRow<T, DB>>>(toError(error))
-    }
-  })
+): Task<Error, List<TableRow<T, DB>>> =>
+  IO.tryAsync<List<TableRow<T, DB>>, Error>(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (tableQuery as any).insert(entities as never).select()
+    if (error) throw toError(error)
+    return List(data as unknown as TableRow<T, DB>[])
+  }, toError)
 
 /**
  * Updates a single entity in the specified table.
@@ -197,7 +168,7 @@ export const addEntities = <T extends TableNames<DB>, DB extends DatabaseSchema 
  * @param is - IS conditions to filter by
  * @param wherein - WHERE IN conditions to filter by
  * @param schema - Database schema to query (defaults to "public")
- * @returns A promise resolving to the updated entity
+ * @returns A Task resolving to the updated entity
  */
 export const updateEntity = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
@@ -207,37 +178,29 @@ export const updateEntity = <T extends TableNames<DB>, DB extends DatabaseSchema
   is?: IsConditionsLocal<TableRow<T, DB>>,
   wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
   schema?: string,
-): FPromise<TaskOutcome<TableRow<T, DB>>> =>
-  wrapAsync(async () => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const baseQuery = (tableQuery as any).update(entities as never).match(where)
+): Task<Error, TableRow<T, DB>> =>
+  IO.tryAsync<TableRow<T, DB>, Error>(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const baseQuery = (tableQuery as any).update(entities as never).match(where)
 
-      const queryWithIn = wherein
-        ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
-            query.in(column, values as never),
-          )
-        : baseQuery
+    const queryWithIn = wherein
+      ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
+          query.in(column, values as never),
+        )
+      : baseQuery
 
-      const queryWithIs = is
-        ? List(Object.entries(is)).foldLeft(queryWithIn)((query, [column, value]) =>
-            query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
-          )
-        : queryWithIn
+    const queryWithIs = is
+      ? List(Object.entries(is)).foldLeft(queryWithIn)((query, [column, value]) =>
+          query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
+        )
+      : queryWithIn
 
-      const { data, error } = await queryWithIs.select().single()
-
-      if (error) {
-        return Err<TableRow<T, DB>>(toError(error))
-      }
-
-      return Ok(data as TableRow<T, DB>)
-    } catch (error) {
-      return Err<TableRow<T, DB>>(toError(error))
-    }
-  })
+    const { data, error } = await queryWithIs.select().single()
+    if (error) throw toError(error)
+    return data as TableRow<T, DB>
+  }, toError)
 
 /**
  * Upserts multiple entities in the specified table (insert or update on conflict).
@@ -252,7 +215,7 @@ export const updateEntity = <T extends TableNames<DB>, DB extends DatabaseSchema
  * @param is - IS conditions to filter by
  * @param wherein - WHERE IN conditions to filter by
  * @param schema - Database schema to query (defaults to "public")
- * @returns A promise resolving to the upserted entities
+ * @returns A Task resolving to the upserted entities
  */
 export const upsertEntities = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
@@ -264,39 +227,31 @@ export const upsertEntities = <T extends TableNames<DB>, DB extends DatabaseSche
   is?: IsConditionsLocal<TableRow<T, DB>>,
   wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
   schema?: string,
-): FPromise<TaskOutcome<List<TableRow<T, DB>>>> =>
-  wrapAsync(async () => {
-    try {
-      const onConflict = Array.isArray(identity) ? identity.join(",") : identity
+): Task<Error, List<TableRow<T, DB>>> =>
+  IO.tryAsync<List<TableRow<T, DB>>, Error>(async () => {
+    const onConflict = Array.isArray(identity) ? identity.join(",") : identity
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const baseQuery = (tableQuery as any).upsert(entities as never, { onConflict }).match(where ?? {})
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const baseQuery = (tableQuery as any).upsert(entities as never, { onConflict }).match(where ?? {})
 
-      const queryWithIn = wherein
-        ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
-            query.in(column, values as never),
-          )
-        : baseQuery
+    const queryWithIn = wherein
+      ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
+          query.in(column, values as never),
+        )
+      : baseQuery
 
-      const queryWithIs = is
-        ? List(Object.entries(is)).foldLeft(queryWithIn)((query, [column, value]) =>
-            query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
-          )
-        : queryWithIn
+    const queryWithIs = is
+      ? List(Object.entries(is)).foldLeft(queryWithIn)((query, [column, value]) =>
+          query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
+        )
+      : queryWithIn
 
-      const { data, error } = await queryWithIs.select()
-
-      if (error) {
-        return Err<List<TableRow<T, DB>>>(toError(error))
-      }
-
-      return Ok(List(data as TableRow<T, DB>[]))
-    } catch (error) {
-      return Err<List<TableRow<T, DB>>>(toError(error))
-    }
-  })
+    const { data, error } = await queryWithIs.select()
+    if (error) throw toError(error)
+    return List(data as TableRow<T, DB>[])
+  }, toError)
 
 /**
  * Deletes a single entity from the specified table.
@@ -308,7 +263,7 @@ export const upsertEntities = <T extends TableNames<DB>, DB extends DatabaseSche
  * @param is - IS conditions to filter by
  * @param wherein - WHERE IN conditions to filter by
  * @param schema - Database schema to query (defaults to "public")
- * @returns A promise resolving to the deleted entity
+ * @returns A Task resolving to the deleted entity
  */
 export const deleteEntity = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
@@ -317,37 +272,29 @@ export const deleteEntity = <T extends TableNames<DB>, DB extends DatabaseSchema
   is?: IsConditionsLocal<TableRow<T, DB>>,
   wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
   schema?: string,
-): FPromise<TaskOutcome<TableRow<T, DB>>> =>
-  wrapAsync(async () => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const baseQuery = (tableQuery as any).delete().match(where)
+): Task<Error, TableRow<T, DB>> =>
+  IO.tryAsync<TableRow<T, DB>, Error>(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const baseQuery = (tableQuery as any).delete().match(where)
 
-      const queryWithIn = wherein
-        ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
-            query.in(column, values as never),
-          )
-        : baseQuery
+    const queryWithIn = wherein
+      ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
+          query.in(column, values as never),
+        )
+      : baseQuery
 
-      const queryWithIs = is
-        ? List(Object.entries(is)).foldLeft(queryWithIn)((query, [column, value]) =>
-            query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
-          )
-        : queryWithIn
+    const queryWithIs = is
+      ? List(Object.entries(is)).foldLeft(queryWithIn)((query, [column, value]) =>
+          query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
+        )
+      : queryWithIn
 
-      const { data, error } = await queryWithIs.select().single()
-
-      if (error) {
-        return Err<TableRow<T, DB>>(toError(error))
-      }
-
-      return Ok(data as TableRow<T, DB>)
-    } catch (error) {
-      return Err<TableRow<T, DB>>(toError(error))
-    }
-  })
+    const { data, error } = await queryWithIs.select().single()
+    if (error) throw toError(error)
+    return data as TableRow<T, DB>
+  }, toError)
 
 /**
  * Deletes multiple entities from the specified table.
@@ -359,7 +306,7 @@ export const deleteEntity = <T extends TableNames<DB>, DB extends DatabaseSchema
  * @param is - IS conditions to filter by
  * @param wherein - WHERE IN conditions to filter by
  * @param schema - Database schema to query (defaults to "public")
- * @returns A promise resolving to the deleted entities
+ * @returns A Task resolving to the deleted entities
  */
 export const deleteEntities = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
@@ -368,37 +315,29 @@ export const deleteEntities = <T extends TableNames<DB>, DB extends DatabaseSche
   is?: IsConditionsLocal<TableRow<T, DB>>,
   wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
   schema?: string,
-): FPromise<TaskOutcome<List<TableRow<T, DB>>>> =>
-  wrapAsync(async () => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const baseQuery = (tableQuery as any).delete().match(where)
+): Task<Error, List<TableRow<T, DB>>> =>
+  IO.tryAsync<List<TableRow<T, DB>>, Error>(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const baseQuery = (tableQuery as any).delete().match(where)
 
-      const queryWithIn = wherein
-        ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
-            query.in(column, values as never),
-          )
-        : baseQuery
+    const queryWithIn = wherein
+      ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
+          query.in(column, values as never),
+        )
+      : baseQuery
 
-      const queryWithIs = is
-        ? List(Object.entries(is)).foldLeft(queryWithIn)((query, [column, value]) =>
-            query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
-          )
-        : queryWithIn
+    const queryWithIs = is
+      ? List(Object.entries(is)).foldLeft(queryWithIn)((query, [column, value]) =>
+          query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
+        )
+      : queryWithIn
 
-      const { data, error } = await queryWithIs.select()
-
-      if (error) {
-        return Err<List<TableRow<T, DB>>>(toError(error))
-      }
-
-      return Ok(List(data as TableRow<T, DB>[]))
-    } catch (error) {
-      return Err<List<TableRow<T, DB>>>(toError(error))
-    }
-  })
+    const { data, error } = await queryWithIs.select()
+    if (error) throw toError(error)
+    return List(data as TableRow<T, DB>[])
+  }, toError)
 
 /**
  * Soft deletes a single entity by setting the deleted timestamp.
@@ -410,7 +349,7 @@ export const deleteEntities = <T extends TableNames<DB>, DB extends DatabaseSche
  * @param is - IS conditions to filter by
  * @param wherein - WHERE IN conditions to filter by
  * @param schema - Database schema to query (defaults to "public")
- * @returns A promise resolving to the soft deleted entity
+ * @returns A Task resolving to the soft deleted entity
  */
 export const softDeleteEntity = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
@@ -419,37 +358,29 @@ export const softDeleteEntity = <T extends TableNames<DB>, DB extends DatabaseSc
   is?: IsConditionsLocal<TableRow<T, DB>>,
   wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
   schema?: string,
-): FPromise<TaskOutcome<TableRow<T, DB>>> =>
-  wrapAsync(async () => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const baseQuery = (tableQuery as any).update({ deleted: new Date().toISOString() } as never).match(where)
+): Task<Error, TableRow<T, DB>> =>
+  IO.tryAsync<TableRow<T, DB>, Error>(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const baseQuery = (tableQuery as any).update({ deleted: new Date().toISOString() } as never).match(where)
 
-      const queryWithIn = wherein
-        ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
-            query.in(column, values as never),
-          )
-        : baseQuery
+    const queryWithIn = wherein
+      ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
+          query.in(column, values as never),
+        )
+      : baseQuery
 
-      const queryWithIs = is
-        ? List(Object.entries(is)).foldLeft(queryWithIn)((query, [column, value]) =>
-            query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
-          )
-        : queryWithIn
+    const queryWithIs = is
+      ? List(Object.entries(is)).foldLeft(queryWithIn)((query, [column, value]) =>
+          query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
+        )
+      : queryWithIn
 
-      const { data, error } = await queryWithIs.select().single()
-
-      if (error) {
-        return Err<TableRow<T, DB>>(toError(error))
-      }
-
-      return Ok(data as TableRow<T, DB>)
-    } catch (error) {
-      return Err<TableRow<T, DB>>(toError(error))
-    }
-  })
+    const { data, error } = await queryWithIs.select().single()
+    if (error) throw toError(error)
+    return data as TableRow<T, DB>
+  }, toError)
 
 /**
  * Soft deletes multiple entities by setting the deleted timestamp.
@@ -461,7 +392,7 @@ export const softDeleteEntity = <T extends TableNames<DB>, DB extends DatabaseSc
  * @param is - IS conditions to filter by
  * @param wherein - WHERE IN conditions to filter by
  * @param schema - Database schema to query (defaults to "public")
- * @returns A promise resolving to the soft deleted entities
+ * @returns A Task resolving to the soft deleted entities
  */
 export const softDeleteEntities = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
@@ -470,37 +401,29 @@ export const softDeleteEntities = <T extends TableNames<DB>, DB extends Database
   is?: IsConditionsLocal<TableRow<T, DB>>,
   wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
   schema?: string,
-): FPromise<TaskOutcome<List<TableRow<T, DB>>>> =>
-  wrapAsync(async () => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const baseQuery = (tableQuery as any).update({ deleted: new Date().toISOString() } as never).match(where)
+): Task<Error, List<TableRow<T, DB>>> =>
+  IO.tryAsync<List<TableRow<T, DB>>, Error>(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const baseQuery = (tableQuery as any).update({ deleted: new Date().toISOString() } as never).match(where)
 
-      const queryWithIn = wherein
-        ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
-            query.in(column, values as never),
-          )
-        : baseQuery
+    const queryWithIn = wherein
+      ? List(Object.entries(wherein)).foldLeft(baseQuery)((query, [column, values]) =>
+          query.in(column, values as never),
+        )
+      : baseQuery
 
-      const queryWithIs = is
-        ? List(Object.entries(is)).foldLeft(queryWithIn)((query, [column, value]) =>
-            query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
-          )
-        : queryWithIn
+    const queryWithIs = is
+      ? List(Object.entries(is)).foldLeft(queryWithIn)((query, [column, value]) =>
+          query.is(column as keyof TableRow<T, DB> & string, value as boolean | null),
+        )
+      : queryWithIn
 
-      const { data, error } = await queryWithIs.select()
-
-      if (error) {
-        return Err<List<TableRow<T, DB>>>(toError(error))
-      }
-
-      return Ok(List(data as TableRow<T, DB>[]))
-    } catch (error) {
-      return Err<List<TableRow<T, DB>>>(toError(error))
-    }
-  })
+    const { data, error } = await queryWithIs.select()
+    if (error) throw toError(error)
+    return List(data as TableRow<T, DB>[])
+  }, toError)
 
 /**
  * Creates a new Query for the specified table with initial conditions.

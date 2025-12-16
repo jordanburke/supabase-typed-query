@@ -1,6 +1,6 @@
 {
   "name": "supabase-typed-query",
-  "version": "0.13.0",
+  "version": "1.0.0",
   "description": "Type-safe query builder and entity pattern for Supabase with TypeScript",
   "type": "module",
   "main": "./dist/index.js",
@@ -68,7 +68,7 @@
   },
   "peerDependencies": {
     "@supabase/supabase-js": "^2.0.0",
-    "functype": ">=0.30.0"
+    "functype": ">=0.41.0"
   },
   "peerDependenciesMeta": {
     "@supabase/supabase-js": {
