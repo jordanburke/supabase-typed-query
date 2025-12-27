@@ -81,7 +81,7 @@ The library is organized around two main APIs:
 
 - **Peer Dependencies**: `@supabase/supabase-js ^2.0.0`, `functype >=0.14.0`
 - **functype Integration**: Re-exports commonly used types and utilities
-- Uses `FPromise<TaskOutcome<T>>` for async operations with error handling
+- Uses `Task<T>` (IOTask from functype) for async operations with error handling
 
 ## Code Style Requirements
 

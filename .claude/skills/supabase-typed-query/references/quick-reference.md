@@ -12,22 +12,22 @@ query<TableName, Database>(client, "table", where?, is?, wherein?, order?, schem
 
 ### Query Methods
 
-| Method               | Returns                            | Description                  |
-| -------------------- | ---------------------------------- | ---------------------------- |
-| `.one()`             | `FPromise<TaskOutcome<Option<T>>>` | Expects 0-1 results          |
-| `.many()`            | `FPromise<TaskOutcome<List<T>>>`   | Expects 0+ results           |
-| `.first()`           | `FPromise<TaskOutcome<Option<T>>>` | Gets first if multiple       |
-| `.oneOrThrow()`      | `Promise<T>`                       | Throws if not found or error |
-| `.manyOrThrow()`     | `Promise<List<T>>`                 | Throws on error              |
-| `.firstOrThrow()`    | `Promise<T>`                       | Throws if not found or error |
-| `.or(where, is?)`    | `Query<T>`                         | Add OR condition             |
-| `.map(fn)`           | `MappedQuery<U>`                   | Transform results            |
-| `.filter(predicate)` | `Query<T>`                         | Filter results               |
-| `.limit(n)`          | `Query<T>`                         | Limit results                |
-| `.offset(n)`         | `Query<T>`                         | Skip first n results         |
-| `.includeDeleted()`  | `Query<T>`                         | Include soft-deleted records |
-| `.excludeDeleted()`  | `Query<T>`                         | Exclude soft-deleted records |
-| `.onlyDeleted()`     | `Query<T>`                         | Only soft-deleted records    |
+| Method               | Returns            | Description                  |
+| -------------------- | ------------------ | ---------------------------- |
+| `.one()`             | `Task<Option<T>>`  | Expects 0-1 results          |
+| `.many()`            | `Task<List<T>>`    | Expects 0+ results           |
+| `.first()`           | `Task<Option<T>>`  | Gets first if multiple       |
+| `.oneOrThrow()`      | `Promise<T>`       | Throws if not found or error |
+| `.manyOrThrow()`     | `Promise<List<T>>` | Throws on error              |
+| `.firstOrThrow()`    | `Promise<T>`       | Throws if not found or error |
+| `.or(where, is?)`    | `Query<T>`         | Add OR condition             |
+| `.map(fn)`           | `MappedQuery<U>`   | Transform results            |
+| `.filter(predicate)` | `Query<T>`         | Filter results               |
+| `.limit(n)`          | `Query<T>`         | Limit results                |
+| `.offset(n)`         | `Query<T>`         | Skip first n results         |
+| `.includeDeleted()`  | `Query<T>`         | Include soft-deleted records |
+| `.excludeDeleted()`  | `Query<T>`         | Exclude soft-deleted records |
+| `.onlyDeleted()`     | `Query<T>`         | Only soft-deleted records    |
 
 ### Comparison Operators
 
@@ -95,12 +95,12 @@ rpc<FunctionName, Database>(client, "function_name", args?, options?)
 
 ### RPC Methods
 
-| Method           | Returns                            | Description                   |
-| ---------------- | ---------------------------------- | ----------------------------- |
-| `.one()`         | `FPromise<TaskOutcome<Option<T>>>` | Expects single result or none |
-| `.many()`        | `FPromise<TaskOutcome<List<T>>>`   | Expects 0+ results as list    |
-| `.oneOrThrow()`  | `Promise<T>`                       | Throws if not found or error  |
-| `.manyOrThrow()` | `Promise<List<T>>`                 | Throws on error               |
+| Method           | Returns            | Description                   |
+| ---------------- | ------------------ | ----------------------------- |
+| `.one()`         | `Task<Option<T>>`  | Expects single result or none |
+| `.many()`        | `Task<List<T>>`    | Expects 0+ results as list    |
+| `.oneOrThrow()`  | `Promise<T>`       | Throws if not found or error  |
+| `.manyOrThrow()` | `Promise<List<T>>` | Throws on error               |
 
 ### RPC Options
 
@@ -263,7 +263,7 @@ type PublicSchema = ValidSchema<Database, "public">
 ## Re-exported from functype
 
 ```typescript
-import { List, Option, Ok, Err, TaskOutcome, FPromise } from "supabase-typed-query"
+import { IO, List, Option, Task } from "supabase-typed-query"
 ```
 
 ## Error Handling
