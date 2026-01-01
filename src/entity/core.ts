@@ -21,6 +21,8 @@ import type {
   TableNames,
   TableRow,
   TableUpdate,
+  ViewNames,
+  ViewRow,
 } from "@/types"
 
 import type { IOTask as Task, List } from "functype"
@@ -701,4 +703,198 @@ export function makePartitionedDeleteItems<
       schema,
     )
   }
+}
+
+// =============================================================================
+// View Entity Factory Methods (Read-Only)
+// =============================================================================
+
+/**
+ * Creates getItem method for ViewEntity (no partition)
+ * Views are read-only, so no soft delete filtering is needed.
+ */
+export function makeViewGetItem<
+  V extends ViewNames<DB, S>,
+  DB extends DatabaseSchema = Database,
+  S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
+>(client: SupabaseClientType<DB>, name: V, schema?: string) {
+  return function getItem({ id, where, is }: GetItemParams<ViewRow<V, DB, S>>) {
+    const whereConditions = { ...where, id } as WhereConditions<ViewRow<V, DB, S>>
+    return createViewGetItemQuery<V, DB, S>(client, name, whereConditions, is, schema)
+  }
+}
+
+/**
+ * Creates getItems method for ViewEntity (no partition)
+ * Views are read-only, so no soft delete filtering is needed.
+ */
+export function makeViewGetItems<
+  V extends ViewNames<DB, S>,
+  DB extends DatabaseSchema = Database,
+  S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
+>(client: SupabaseClientType<DB>, name: V, schema?: string) {
+  return function getItems({
+    where,
+    is,
+    wherein,
+    order,
+    gte,
+    gt,
+    lte,
+    lt,
+    neq,
+    like,
+    ilike,
+    not,
+  }: GetItemsParams<ViewRow<V, DB, S>> = {}) {
+    return createViewGetItemsQuery<V, DB, S>(
+      client,
+      name,
+      where as WhereConditions<ViewRow<V, DB, S>>,
+      is,
+      wherein,
+      order,
+      schema,
+      { gte, gt, lte, lt, neq, like, ilike },
+      not,
+    )
+  }
+}
+
+/**
+ * Creates getItem method for PartitionedViewEntity
+ * Views are read-only, so no soft delete filtering is needed.
+ */
+export function makePartitionedViewGetItem<
+  V extends ViewNames<DB, S>,
+  K extends PartitionKey,
+  DB extends DatabaseSchema = Database,
+  S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
+>(client: SupabaseClientType<DB>, name: V, partitionField: string, schema?: string) {
+  return function getItem(partitionKey: K, { id, where, is }: GetItemParams<ViewRow<V, DB, S>>) {
+    const whereConditions = buildWhereWithPartitionAndId(partitionField, partitionKey, id, where)
+    return createViewGetItemQuery<V, DB, S>(
+      client,
+      name,
+      whereConditions as WhereConditions<ViewRow<V, DB, S>>,
+      is,
+      schema,
+    )
+  }
+}
+
+/**
+ * Creates getItems method for PartitionedViewEntity
+ * Views are read-only, so no soft delete filtering is needed.
+ */
+export function makePartitionedViewGetItems<
+  V extends ViewNames<DB, S>,
+  K extends PartitionKey,
+  DB extends DatabaseSchema = Database,
+  S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
+>(client: SupabaseClientType<DB>, name: V, partitionField: string, schema?: string) {
+  return function getItems(
+    partitionKey: K,
+    { where, is, wherein, order, gte, gt, lte, lt, neq, like, ilike, not }: GetItemsParams<ViewRow<V, DB, S>> = {},
+  ) {
+    const whereConditions = buildWhereWithPartition(partitionField, partitionKey, where)
+    return createViewGetItemsQuery<V, DB, S>(
+      client,
+      name,
+      whereConditions as WhereConditions<ViewRow<V, DB, S>>,
+      is,
+      wherein,
+      order,
+      schema,
+      { gte, gt, lte, lt, neq, like, ilike },
+      not,
+    )
+  }
+}
+
+// =============================================================================
+// View Query Creation Helpers
+// =============================================================================
+
+/**
+ * Creates a single-item query for a view (no soft delete mode)
+ * Uses type assertions because createQuery is typed for Tables but works identically for Views at runtime.
+ */
+function createViewGetItemQuery<
+  V extends ViewNames<DB, S>,
+  DB extends DatabaseSchema = Database,
+  S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
+>(
+  client: SupabaseClientType<DB>,
+  name: V,
+  where: WhereConditions<ViewRow<V, DB, S>>,
+  is: TypedRecord<ViewRow<V, DB, S>, null | boolean> | undefined,
+  schema?: string,
+): Query<ViewRow<V, DB, S>> {
+  // Views work identically to tables at runtime - only the type constraints differ
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const viewAsTable = name as any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const clientAny = client as any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const query = createQuery(clientAny, viewAsTable, where as any, is as any, undefined, undefined, undefined, schema)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return query as any as Query<ViewRow<V, DB, S>>
+}
+
+/**
+ * Creates a multi-item query for a view (no soft delete mode)
+ * Uses type assertions because createQuery is typed for Tables but works identically for Views at runtime.
+ */
+function createViewGetItemsQuery<
+  V extends ViewNames<DB, S>,
+  DB extends DatabaseSchema = Database,
+  S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
+>(
+  client: SupabaseClientType<DB>,
+  name: V,
+  where: WhereConditions<ViewRow<V, DB, S>> | undefined,
+  is: TypedRecord<ViewRow<V, DB, S>, null | boolean> | undefined,
+  wherein: TypedRecord<ViewRow<V, DB, S>, unknown[]> | undefined,
+  order: [keyof ViewRow<V, DB, S> & string, { ascending?: boolean; nullsFirst?: boolean }] | undefined,
+  schema: string | undefined,
+  comparison: {
+    gte?: TypedRecord<ViewRow<V, DB, S>, number | string | Date>
+    gt?: TypedRecord<ViewRow<V, DB, S>, number | string | Date>
+    lte?: TypedRecord<ViewRow<V, DB, S>, number | string | Date>
+    lt?: TypedRecord<ViewRow<V, DB, S>, number | string | Date>
+    neq?: TypedRecord<ViewRow<V, DB, S>, unknown>
+    like?: TypedRecord<ViewRow<V, DB, S>, string>
+    ilike?: TypedRecord<ViewRow<V, DB, S>, string>
+  },
+  not?: {
+    is?: TypedRecord<ViewRow<V, DB, S>, null | boolean>
+    in?: TypedRecord<ViewRow<V, DB, S>, unknown[]>
+  },
+): Query<ViewRow<V, DB, S>> {
+  // Views work identically to tables at runtime - only the type constraints differ
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const viewAsTable = name as any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const clientAny = client as any
+  const query = createQuery(
+    clientAny,
+    viewAsTable,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    where as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    is as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    wherein as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    order as any,
+    undefined,
+    schema,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    comparison as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    not as any,
+  )
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return query as any as Query<ViewRow<V, DB, S>>
 }

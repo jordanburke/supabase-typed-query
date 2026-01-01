@@ -21,6 +21,8 @@ export type {
   TableUpdate,
   TypedDatabase,
   ValidSchema,
+  ViewNames,
+  ViewRow,
 } from "./types"
 
 // Query exports
@@ -75,20 +77,31 @@ export type {
   IdParam,
   IEntity,
   IPartitionedEntity,
+  IPartitionedViewEntity,
   IsParams,
+  IViewEntity,
   MutationMultiExecution,
   MutationSingleExecution,
   OrderParams,
   PartitionedEntityConfig,
+  PartitionedViewEntityConfig,
   PartitionKey,
   TypedRecord,
   UpdateItemParams,
   UpdateItemsParams,
   UpsertItemsParams,
+  ViewEntityConfig,
   WhereinParams,
   WhereParams,
 } from "./entity"
-export { Entity, MultiMutationQuery, PartitionedEntity, SingleMutationQuery } from "./entity"
+export {
+  Entity,
+  MultiMutationQuery,
+  PartitionedEntity,
+  PartitionedViewEntity,
+  SingleMutationQuery,
+  ViewEntity,
+} from "./entity"
 
 // Re-export functype utilities that are commonly used with this library
 export type { IOTask as Task } from "functype"

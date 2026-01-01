@@ -12,6 +12,8 @@ import type {
   TableNames,
   TableRow,
   TableUpdate,
+  ViewNames,
+  ViewRow,
 } from "@/types"
 
 import type { Brand, IOTask as Task, List } from "functype"
@@ -307,3 +309,61 @@ export type EntityType<
   DB extends DatabaseSchema = Database,
   S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
 > = IEntity<T, DB, S>
+
+// =============================================================================
+// View Entity Interfaces
+// =============================================================================
+
+/**
+ * Configuration for ViewEntity (read-only, no partition)
+ */
+export type ViewEntityConfig = {
+  /** Database schema to query (defaults to "public") */
+  schema?: string
+}
+
+/**
+ * Configuration for PartitionedViewEntity
+ */
+export type PartitionedViewEntityConfig = {
+  /** The database column name used for partitioning (e.g., "tenant_id") */
+  partitionField: string
+  /** Database schema to query (defaults to "public") */
+  schema?: string
+}
+
+/**
+ * Read-only interface for ViewEntity instances (global, no partition)
+ * Views only have Row type, so only read operations are available.
+ *
+ * @typeParam V - The view name
+ * @typeParam DB - The database schema type (defaults to placeholder Database)
+ * @typeParam S - The schema name (defaults to "public")
+ */
+export type IViewEntity<
+  V extends ViewNames<DB, S>,
+  DB extends DatabaseSchema = Database,
+  S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
+> = {
+  getItem(params: GetItemParams<ViewRow<V, DB, S>>): Query<ViewRow<V, DB, S>>
+  getItems(params?: GetItemsParams<ViewRow<V, DB, S>>): Query<ViewRow<V, DB, S>>
+}
+
+/**
+ * Read-only interface for PartitionedViewEntity instances (requires partition key on calls)
+ * Views only have Row type, so only read operations are available.
+ *
+ * @typeParam V - The view name
+ * @typeParam K - The partition key type
+ * @typeParam DB - The database schema type (defaults to placeholder Database)
+ * @typeParam S - The schema name (defaults to "public")
+ */
+export type IPartitionedViewEntity<
+  V extends ViewNames<DB, S>,
+  K extends PartitionKey,
+  DB extends DatabaseSchema = Database,
+  S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
+> = {
+  getItem(partitionKey: K, params: GetItemParams<ViewRow<V, DB, S>>): Query<ViewRow<V, DB, S>>
+  getItems(partitionKey: K, params?: GetItemsParams<ViewRow<V, DB, S>>): Query<ViewRow<V, DB, S>>
+}

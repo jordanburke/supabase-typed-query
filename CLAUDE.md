@@ -59,8 +59,11 @@ The library is organized around two main APIs:
    - Execution methods: `.one()`, `.many()`, `.first()` with OrThrow variants
 
 2. **Entity API** (`src/entity/`): Traditional CRUD operations with consistent patterns
-   - `Entity()` - Factory function for creating entity instances
-   - Methods: `getGlobalItems()`, `getItem()`, `addItems()`, `updateItem()`, etc.
+   - `Entity()` - Factory function for creating table entity instances
+   - `PartitionedEntity()` - Multi-tenant entity with partition key requirement
+   - `ViewEntity()` - Read-only entity for database views (getItem, getItems only)
+   - `PartitionedViewEntity()` - Read-only partitioned entity for views
+   - Methods: `getItem()`, `getItems()`, `addItems()`, `updateItem()`, etc.
 
 ### Key Design Patterns
 
@@ -73,7 +76,8 @@ The library is organized around two main APIs:
 ### Type System
 
 - `Database` - User-provided database schema interface
-- `TableNames`, `TableRow<T>`, `TableInsert<T>`, `TableUpdate<T>` - Generated from schema
+- `TableNames`, `TableRow<T>`, `TableInsert<T>`, `TableUpdate<T>` - Table types from schema
+- `ViewNames`, `ViewRow<V>` - View types from schema (read-only, no Insert/Update)
 - Query conditions support comparison operators: `{ field: { gte: value, ilike: pattern, in: array } }`
 - Supports IS NULL/NOT NULL with `is` parameter: `{ field: null | true | false }`
 
@@ -147,12 +151,12 @@ Claude Code skills are located in `.claude/skills/supabase-typed-query/`.
 
 **API changes that require skill updates:**
 
-- Adding/removing/renaming methods on `Query`, `MappedQuery`, `Entity`, or `PartitionedEntity`
+- Adding/removing/renaming methods on `Query`, `MappedQuery`, `Entity`, `PartitionedEntity`, `ViewEntity`, or `PartitionedViewEntity`
 - Changing method signatures or return types
 - Adding/removing comparison operators
 - Modifying error handling patterns
 - Changes to `TaskOutcome` or `OrThrow` behavior
-- New configuration options for Entity/PartitionedEntity
+- New configuration options for Entity/PartitionedEntity/ViewEntity
 
 **Checklist for API changes:**
 

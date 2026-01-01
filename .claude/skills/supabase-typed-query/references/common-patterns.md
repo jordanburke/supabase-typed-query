@@ -515,3 +515,109 @@ const recentOrders = await query<"orders", Database>(client, "orders", {
   .limit(summary.pending_count)
   .manyOrThrow()
 ```
+
+## ViewEntity Patterns (Read-Only Views)
+
+### Basic View Queries
+
+```typescript
+import { ViewEntity } from "supabase-typed-query"
+
+// Create a view entity (views are always read-only)
+const AuthUsersView = ViewEntity<"auth_users_view", Database, "agent_gate">(client, "auth_users_view", {
+  schema: "agent_gate",
+})
+
+// Query the view
+const user = await AuthUsersView.getItem({ id: userId }).oneOrThrow()
+const activeUsers = await AuthUsersView.getItems({
+  where: { is_active: true },
+}).manyOrThrow()
+```
+
+### Aggregation Views
+
+```typescript
+// Views are perfect for pre-computed aggregations
+const UserStatsView = ViewEntity<"user_stats_view", Database>(client, "user_stats_view")
+
+// Get stats for a user
+const stats = await UserStatsView.getItem({ id: userId }).oneOrThrow()
+console.log(`Orders: ${stats.total_orders}, Spent: ${stats.total_spent}`)
+
+// Get top spenders
+const topSpenders = await UserStatsView.getItems({
+  order: ["total_spent", { ascending: false }],
+}).manyOrThrow()
+```
+
+### Views with Custom Schema
+
+```typescript
+// Access views in non-public schemas
+const AnalyticsView = ViewEntity<"daily_metrics_view", Database, "analytics">(client, "daily_metrics_view", {
+  schema: "analytics",
+})
+
+const metrics = await AnalyticsView.getItems({
+  where: { date: { gte: startDate, lte: endDate } },
+}).manyOrThrow()
+```
+
+### Partitioned Views (Multi-Tenant)
+
+```typescript
+import { PartitionedViewEntity } from "supabase-typed-query"
+
+// Tenant-scoped view for analytics
+const TenantAnalyticsView = PartitionedViewEntity<"tenant_metrics_view", string, Database>(
+  client,
+  "tenant_metrics_view",
+  { partitionField: "tenant_id" },
+)
+
+// All queries automatically scoped to tenant
+const metrics = await TenantAnalyticsView.getItems(tenantId, {
+  where: { period: "monthly" },
+  order: ["date", { ascending: false }],
+}).manyOrThrow()
+```
+
+### Type-Safe View with Branded Partition Key
+
+```typescript
+import { ValidatedBrand } from "functype"
+
+type TenantId = ValidatedBrand<string, "TenantId">
+
+const TenantReportView = PartitionedViewEntity<"tenant_reports_view", TenantId, Database>(
+  client,
+  "tenant_reports_view",
+  { partitionField: "tenant_id", schema: "reporting" },
+)
+
+// Type-safe tenant key required
+const tenantId = "tenant-123" as TenantId
+const reports = await TenantReportView.getItems(tenantId, {
+  where: { status: "completed" },
+}).manyOrThrow()
+```
+
+### Views vs Tables: When to Use Each
+
+```typescript
+// Use ViewEntity when:
+// - Querying pre-computed aggregations
+// - Accessing data across schema boundaries (e.g., auth.users)
+// - Working with denormalized read-optimized views
+// - Data is naturally read-only
+
+const AuthView = ViewEntity<"auth_users_view", Database>(client, "auth_users_view")
+
+// Use Entity when:
+// - You need CRUD operations
+// - Working with base tables
+// - Need soft delete functionality
+
+const UserEntity = Entity<"users", Database>(client, "users", { softDelete: true })
+```

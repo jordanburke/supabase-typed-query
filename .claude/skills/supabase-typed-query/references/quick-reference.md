@@ -217,6 +217,41 @@ MyEntity.deleteItems(partitionKey, { where }) // soft/hard based on config
 [columnName, { ascending?: boolean, nullsFirst?: boolean }]
 ```
 
+### ViewEntity (Read-Only Views)
+
+```typescript
+import { ViewEntity } from "supabase-typed-query"
+
+const MyView = ViewEntity<"view_name", Database>(client, "view_name", {
+  schema?: string, // Optional: defaults to "public"
+})
+```
+
+| Method               | Returns    | Description        |
+| -------------------- | ---------- | ------------------ |
+| `.getItem({ id })`   | `Query<T>` | Get single by ID   |
+| `.getItems({ ... })` | `Query<T>` | Get multiple items |
+
+**Note:** Views are read-only. No `addItems`, `updateItem`, `deleteItem`, or `softDelete` methods.
+
+### PartitionedViewEntity
+
+```typescript
+import { PartitionedViewEntity } from "supabase-typed-query"
+
+const MyView = PartitionedViewEntity<"view_name", KeyType, Database>(client, "view_name", {
+  partitionField: "tenant_id",
+  schema?: string, // Optional: defaults to "public"
+})
+```
+
+All methods take partition key as first argument:
+
+```typescript
+MyView.getItem(partitionKey, { id, ... })
+MyView.getItems(partitionKey, { ... })
+```
+
 ## Type Utilities
 
 ```typescript
@@ -225,6 +260,8 @@ import type {
   TableRow,
   TableInsert,
   TableUpdate,
+  ViewNames,
+  ViewRow,
   DatabaseSchema,
   SchemaNames,
   TypedDatabase,
@@ -252,6 +289,18 @@ type UserInsert = TableInsert<"users", Database>
 
 // Get update type for a table
 type UserUpdate = TableUpdate<"users", Database>
+
+// Get all view names (defaults to public schema)
+type Views = ViewNames<Database>
+
+// Get view names from a specific schema
+type AnalyticsViews = ViewNames<Database, "analytics">
+
+// Get row type for a view (views are read-only, only have Row type)
+type StatsRow = ViewRow<"user_stats_view", Database>
+
+// Get view row type from a custom schema
+type DailyStatsRow = ViewRow<"daily_stats_view", Database, "analytics">
 
 // Strip __InternalSupabase from Database type (optional - SchemaNames handles this automatically)
 type CleanDB = TypedDatabase<Database>

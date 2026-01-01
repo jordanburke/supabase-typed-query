@@ -326,6 +326,49 @@ const tenantPosts = await TenantPostEntity.getItems(tenantId, {
 // SQL: WHERE tenant_id = 'tenantId' AND status = 'published' AND deleted IS NULL
 ```
 
+### ViewEntity (Read-Only Views)
+
+Database views are read-only in Supabase and only have a `Row` type (no `Insert` or `Update`). Use `ViewEntity` for type-safe querying of views.
+
+```typescript
+import { ViewEntity } from "supabase-typed-query"
+
+// Create a read-only view entity
+const AuthUsersView = ViewEntity<"auth_users_view", Database, "agent_gate">(client, "auth_users_view", {
+  schema: "agent_gate",
+})
+
+// Query the view - only getItem and getItems are available
+const user = await AuthUsersView.getItem({ id: "123" }).oneOrThrow()
+const activeUsers = await AuthUsersView.getItems({
+  where: { is_active: true },
+  order: ["created_at", { ascending: false }],
+}).manyOrThrow()
+```
+
+**Key differences from Entity:**
+
+- Only `getItem()` and `getItems()` methods available (no write operations)
+- No `softDelete` configuration (views are read-only snapshots)
+- Uses `ViewNames` and `ViewRow` types instead of `TableNames` and `TableRow`
+
+### PartitionedViewEntity (Multi-Tenant Views)
+
+For views that require partition-based access control:
+
+```typescript
+import { PartitionedViewEntity } from "supabase-typed-query"
+
+const TenantStatsView = PartitionedViewEntity<"tenant_stats_view", string, Database>(client, "tenant_stats_view", {
+  partitionField: "tenant_id",
+})
+
+// Partition key is required for all queries
+const stats = await TenantStatsView.getItems(tenantId, {
+  where: { period: "monthly" },
+}).manyOrThrow()
+```
+
 ## Error Handling
 
 ### TaskOutcome Pattern (Explicit)

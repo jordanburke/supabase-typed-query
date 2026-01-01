@@ -1,6 +1,6 @@
 {
   "name": "supabase-typed-query",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Type-safe query builder and entity pattern for Supabase with TypeScript",
   "type": "module",
   "main": "./dist/index.js",

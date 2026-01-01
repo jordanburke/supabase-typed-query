@@ -7,12 +7,13 @@ Type-safe query builder and entity pattern for Supabase with TypeScript.
 - 🔒 **Full TypeScript type safety** - Leverage your database types for compile-time safety
 - 🔗 **Chainable query API** - Build complex queries with OR conditions and functional operations
 - 🎯 **Entity pattern** - Consistent CRUD operations across all tables
+- 👁️ **View support** - Read-only ViewEntity for querying database views
 - 🚀 **Functional programming** - Built with functype for robust error handling
 - ⚡ **Zero runtime overhead** - All type checking happens at compile time
 - 🔄 **Composable queries** - Mix and match conditions, filters, and transformations
 - 🗑️ **Soft delete support** - Built-in soft delete filtering with per-query overrides
 - 🏢 **Multi-tenancy ready** - Automatic partition key filtering for tenant isolation
-- 🗄️ **Custom schema support** - Query tables in any PostgreSQL schema, not just public
+- 🗄️ **Custom schema support** - Query tables and views in any PostgreSQL schema
 
 ## Installation
 
@@ -235,6 +236,42 @@ const results = await query(
 
 When no schema is specified, queries use the default `public` schema via `client.from()`. When a schema is specified, queries use `client.schema(name).from(table)`.
 
+### View Entities (Read-Only)
+
+Database views in Supabase are read-only and only have a `Row` type (no `Insert` or `Update`). Use `ViewEntity` for type-safe querying of views:
+
+```typescript
+import { ViewEntity, PartitionedViewEntity } from "supabase-typed-query"
+
+// Create a read-only view entity
+const AuthUsersView = ViewEntity(supabase, "auth_users_view", {
+  schema: "agent_gate", // Optional: defaults to "public"
+})
+
+// Query the view - only getItem and getItems are available
+const user = await AuthUsersView.getItem({ id: "123" }).one()
+const activeUsers = await AuthUsersView.getItems({
+  where: { is_active: true },
+  order: ["created_at", { ascending: false }],
+}).many()
+
+// For multi-tenant views, use PartitionedViewEntity
+const TenantStatsView = PartitionedViewEntity(supabase, "tenant_stats_view", {
+  partitionField: "tenant_id",
+})
+
+// All queries require partition key
+const stats = await TenantStatsView.getItems(tenantId, {
+  where: { period: "monthly" },
+}).many()
+```
+
+**Key differences from Entity:**
+
+- Only `getItem()` and `getItems()` methods (no write operations)
+- No `softDelete` configuration (views are read-only snapshots)
+- Uses `ViewNames` and `ViewRow` types instead of `TableNames` and `TableRow`
+
 ### Multi-Tenancy with Partition Keys
 
 Use partition keys to automatically scope queries to a tenant or partition:
@@ -344,6 +381,22 @@ const posts = await query(supabase, "posts", {
 
 - `partitionField: string` - (Required) Column name used for partition filtering (e.g., `"tenant_id"`)
 - `softDelete: boolean` - (Required) When `true`, automatically excludes soft-deleted items
+- `schema?: string` - (Optional) PostgreSQL schema to query from (defaults to `"public"`)
+
+### ViewEntity Methods
+
+- `getItem({ id, where?, is? })` - Get a single item by ID
+- `getItems({ where?, is?, wherein?, order? })` - Get filtered items
+
+> **Note:** ViewEntity only supports read operations. No `addItems`, `updateItem`, `deleteItem`, or soft delete methods.
+
+### ViewEntity Configuration
+
+- `schema?: string` - (Optional) PostgreSQL schema to query from (defaults to `"public"`)
+
+### PartitionedViewEntity Configuration
+
+- `partitionField: string` - (Required) Column name used for partition filtering (e.g., `"tenant_id"`)
 - `schema?: string` - (Optional) PostgreSQL schema to query from (defaults to `"public"`)
 
 ## Requirements

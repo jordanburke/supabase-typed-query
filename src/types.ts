@@ -150,6 +150,36 @@ export type TableUpdate<
 > = ValidSchema<DB, S>["Tables"][T]["Update"]
 
 // =============================================================================
+// Generic View Types
+// =============================================================================
+
+/**
+ * View names for a given database schema.
+ * Uses ValidSchema for type-safe access - only valid SchemaDefinitions can be accessed.
+ * Views are read-only and only have a Row type (no Insert/Update).
+ * @typeParam DB - The database schema type (defaults to placeholder Database)
+ * @typeParam S - The schema name (defaults to "public")
+ */
+export type ViewNames<DB extends DatabaseSchema = Database, S extends SchemaNames<DB> = "public" & SchemaNames<DB>> =
+  ValidSchema<DB, S>["Views"] extends Record<string, { Row: object }>
+    ? keyof ValidSchema<DB, S>["Views"] & string
+    : never
+
+/**
+ * Row type for a given view in a database schema.
+ * Views are read-only, so they only have a Row type (no Insert or Update).
+ * Uses ValidSchema for type-safe access.
+ * @typeParam V - The view name
+ * @typeParam DB - The database schema type (defaults to placeholder Database)
+ * @typeParam S - The schema name (defaults to "public")
+ */
+export type ViewRow<
+  V extends ViewNames<DB, S>,
+  DB extends DatabaseSchema = Database,
+  S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
+> = ValidSchema<DB, S>["Views"] extends Record<string, { Row: object }> ? ValidSchema<DB, S>["Views"][V]["Row"] : never
+
+// =============================================================================
 // RPC / Function Types
 // =============================================================================
 
