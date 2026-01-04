@@ -1,0 +1,10 @@
+{
+  "srcDir": "./src",
+  "commands": {
+    "compile": "tsc --noEmit",
+    "build": "rimraf dist && cross-env NODE_ENV=production tsdown"
+  },
+  "chains": {
+    "validate": ["format", "lint", "compile", "test", "build"]
+  }
+}

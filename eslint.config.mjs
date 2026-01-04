@@ -34,7 +34,7 @@ export default [
       "**/*.d.ts",
       "jest.config.ts",
       "types/config.ts",
-      "vite.config.ts",
+      "tsdown.config.ts",
       "vitest.config.ts",
       "test/integration/**/*.spec.ts",
       "test/integration/**/*.spec.ts.disabled",

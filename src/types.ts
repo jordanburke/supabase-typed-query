@@ -307,7 +307,7 @@ export interface RpcQueryBuilder extends Promise<{ data: unknown; error: unknown
  *
  * @typeParam DB - The database schema type (defaults to placeholder Database)
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 export interface SupabaseClientType<_DB extends DatabaseSchema = Database> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   from: (table: any) => any

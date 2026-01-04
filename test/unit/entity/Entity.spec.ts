@@ -408,7 +408,7 @@ describe("Entity", () => {
       expect(mockClient.from).toHaveBeenCalledWith("users")
       expect(updateSpy).toHaveBeenCalled()
       // Verify it was called with a deleted timestamp
-      const updateArg = updateSpy.mock.calls[0][0]
+      const updateArg = updateSpy.mock.calls[0]?.[0]
       expect(updateArg).toHaveProperty("deleted")
       expect(typeof updateArg.deleted).toBe("string")
     })
@@ -484,7 +484,7 @@ describe("Entity", () => {
       expect(mockClient.from).toHaveBeenCalledWith("users")
       expect(updateSpy).toHaveBeenCalled()
       // Verify it was called with a deleted timestamp
-      const updateArg = updateSpy.mock.calls[0][0]
+      const updateArg = updateSpy.mock.calls[0]?.[0]
       expect(updateArg).toHaveProperty("deleted")
       expect(typeof updateArg.deleted).toBe("string")
     })

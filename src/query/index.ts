@@ -66,7 +66,6 @@ export const getEntity = <T extends TableNames<DB>, DB extends DatabaseSchema = 
   schema?: string,
 ): Task<Error, TableRow<T, DB>> =>
   IO.tryAsync<TableRow<T, DB>, Error>(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const baseQuery = (tableQuery as any).select("*").match(where)
@@ -108,7 +107,6 @@ export const getEntities = <T extends TableNames<DB>, DB extends DatabaseSchema 
   schema?: string,
 ): Task<Error, List<TableRow<T, DB>>> =>
   IO.tryAsync<List<TableRow<T, DB>>, Error>(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const baseQuery = (tableQuery as any).select("*").match(where)
@@ -149,7 +147,6 @@ export const addEntities = <T extends TableNames<DB>, DB extends DatabaseSchema 
   schema?: string,
 ): Task<Error, List<TableRow<T, DB>>> =>
   IO.tryAsync<List<TableRow<T, DB>>, Error>(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (tableQuery as any).insert(entities as never).select()
@@ -180,7 +177,6 @@ export const updateEntity = <T extends TableNames<DB>, DB extends DatabaseSchema
   schema?: string,
 ): Task<Error, TableRow<T, DB>> =>
   IO.tryAsync<TableRow<T, DB>, Error>(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const baseQuery = (tableQuery as any).update(entities as never).match(where)
@@ -231,7 +227,6 @@ export const upsertEntities = <T extends TableNames<DB>, DB extends DatabaseSche
   IO.tryAsync<List<TableRow<T, DB>>, Error>(async () => {
     const onConflict = Array.isArray(identity) ? identity.join(",") : identity
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const baseQuery = (tableQuery as any).upsert(entities as never, { onConflict }).match(where ?? {})
@@ -274,7 +269,6 @@ export const deleteEntity = <T extends TableNames<DB>, DB extends DatabaseSchema
   schema?: string,
 ): Task<Error, TableRow<T, DB>> =>
   IO.tryAsync<TableRow<T, DB>, Error>(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const baseQuery = (tableQuery as any).delete().match(where)
@@ -317,7 +311,6 @@ export const deleteEntities = <T extends TableNames<DB>, DB extends DatabaseSche
   schema?: string,
 ): Task<Error, List<TableRow<T, DB>>> =>
   IO.tryAsync<List<TableRow<T, DB>>, Error>(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const baseQuery = (tableQuery as any).delete().match(where)
@@ -360,7 +353,6 @@ export const softDeleteEntity = <T extends TableNames<DB>, DB extends DatabaseSc
   schema?: string,
 ): Task<Error, TableRow<T, DB>> =>
   IO.tryAsync<TableRow<T, DB>, Error>(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const baseQuery = (tableQuery as any).update({ deleted: new Date().toISOString() } as never).match(where)
@@ -403,7 +395,6 @@ export const softDeleteEntities = <T extends TableNames<DB>, DB extends Database
   schema?: string,
 ): Task<Error, List<TableRow<T, DB>>> =>
   IO.tryAsync<List<TableRow<T, DB>>, Error>(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tableQuery = schema ? client.schema(schema).from(table) : client.from(table)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const baseQuery = (tableQuery as any).update({ deleted: new Date().toISOString() } as never).match(where)

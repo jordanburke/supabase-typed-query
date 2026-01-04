@@ -35,8 +35,11 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
     const baseQuery = schema ? client.schema(schema).from(table) : client.from(table)
 
     // Handle multiple conditions with OR logic
+    const firstCondition = conditions[0]
     const queryWithConditions =
-      conditions.length === 1 ? applyCondition(baseQuery, conditions[0]) : applyOrConditions(baseQuery, conditions)
+      conditions.length === 1 && firstCondition
+        ? applyCondition(baseQuery, firstCondition)
+        : applyOrConditions(baseQuery, conditions)
 
     // Apply ordering if specified
     const queryWithOrder = order ? queryWithConditions.order(order[0], order[1]) : queryWithConditions
@@ -294,11 +297,10 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
     const varyingConditions: QueryCondition<TableRow<T, DB>>[] = []
 
     // Find conditions that are common across all OR branches
-    if (conditions.length > 0) {
-      const firstCondition = conditions[0]
-
+    const firstCond = conditions[0]
+    if (conditions.length > 0 && firstCond) {
       // Check each key-value pair in the first condition
-      Object.entries(firstCondition.where).forEach(([key, value]) => {
+      Object.entries(firstCond.where).forEach(([key, value]) => {
         // If this key-value pair exists in ALL conditions, it's common
         const isCommonCondition = conditions.every(
           (condition) => (condition.where as Record<string, unknown>)[key] === value,
