@@ -79,16 +79,16 @@
     }
   },
   "devDependencies": {
-    "@supabase/supabase-js": "^2.89.0",
-    "@types/node": "~24.10.4",
+    "@supabase/supabase-js": "^2.90.1",
+    "@types/node": "~24.10.7",
     "cross-env": "^7.0.3",
     "dotenv": "^17.2.3",
     "eslint-plugin-functional": "^9.0.2",
     "functype": "^0.41.3",
     "globals": "^16.5.0",
-    "rimraf": "^6.0.1",
-    "ts-builds": "^2.0.0",
-    "tsdown": "^0.18.3"
+    "rimraf": "^6.1.2",
+    "ts-builds": "^2.1.0",
+    "tsdown": "^0.19.0"
   },
   "engines": {
     "node": ">=22 <25"
