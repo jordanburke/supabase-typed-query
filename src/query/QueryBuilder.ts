@@ -571,12 +571,23 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
 
     /**
      * Execute query expecting exactly one result
+     * Returns Option.none() for "not found" - this is expected behavior, not an error
      */
     one: (): Task<Error, Option<Row>> => {
       return IO.tryAsync<Option<Row>, Error>(async () => {
         const query = buildSupabaseQuery()
         const { data, error } = await query.single()
-        if (error) throw toError(error)
+
+        // For .one(), "no rows found" (PGRST116) is not an error - it's just None
+        if (error) {
+          const isNotFoundError = error.code === "PGRST116" && error.details?.includes("0 rows")
+          if (isNotFoundError) {
+            return Option.none<Row>()
+          }
+          // Only actual errors get thrown (and logged by tapError)
+          throw toError(error)
+        }
+
         const result = data as Row
         const passes = config.filterFn ? config.filterFn(result) : true
         return passes ? Option(result) : Option.none<Row>()
