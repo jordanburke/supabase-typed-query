@@ -167,8 +167,7 @@ describe("Entity", () => {
       expect(result).toBeDefined()
       expect(typeof result.many).toBe("function")
       expect(typeof result.manyOrThrow).toBe("function")
-      expect(typeof result.execute).toBe("function")
-      expect(typeof result.executeOrThrow).toBe("function")
+      expect(typeof result.then).toBe("function")
     })
   })
 
@@ -185,8 +184,7 @@ describe("Entity", () => {
       expect(result).toBeDefined()
       expect(typeof result.one).toBe("function")
       expect(typeof result.oneOrThrow).toBe("function")
-      expect(typeof result.execute).toBe("function")
-      expect(typeof result.executeOrThrow).toBe("function")
+      expect(typeof result.then).toBe("function")
     })
 
     it("should accept multiple where conditions", () => {
@@ -228,8 +226,7 @@ describe("Entity", () => {
       expect(result).toBeDefined()
       expect(typeof result.many).toBe("function")
       expect(typeof result.manyOrThrow).toBe("function")
-      expect(typeof result.execute).toBe("function")
-      expect(typeof result.executeOrThrow).toBe("function")
+      expect(typeof result.then).toBe("function")
     })
 
     it("should accept wherein conditions", () => {
@@ -274,8 +271,7 @@ describe("Entity", () => {
       expect(result).toBeDefined()
       expect(typeof result.many).toBe("function")
       expect(typeof result.manyOrThrow).toBe("function")
-      expect(typeof result.execute).toBe("function")
-      expect(typeof result.executeOrThrow).toBe("function")
+      expect(typeof result.then).toBe("function")
     })
 
     it("should accept custom identity column", () => {
@@ -349,8 +345,7 @@ describe("Entity", () => {
       expect(result).toBeDefined()
       expect(typeof result.one).toBe("function")
       expect(typeof result.oneOrThrow).toBe("function")
-      expect(typeof result.execute).toBe("function")
-      expect(typeof result.executeOrThrow).toBe("function")
+      expect(typeof result.then).toBe("function")
     })
 
     it("should call .delete() when softDelete is false (hard delete)", async () => {
@@ -374,7 +369,7 @@ describe("Entity", () => {
       const UserEntity = Entity(mockClient, "users", { softDelete: false })
 
       await UserEntity.deleteItem({ where: { id: "user-123" } })
-        .execute()
+        .one()
         .run()
 
       expect(mockClient.from).toHaveBeenCalledWith("users")
@@ -402,7 +397,7 @@ describe("Entity", () => {
       const UserEntity = Entity(mockClient, "users", { softDelete: true })
 
       await UserEntity.deleteItem({ where: { id: "user-123" } })
-        .execute()
+        .one()
         .run()
 
       expect(mockClient.from).toHaveBeenCalledWith("users")
@@ -426,8 +421,7 @@ describe("Entity", () => {
       expect(result).toBeDefined()
       expect(typeof result.many).toBe("function")
       expect(typeof result.manyOrThrow).toBe("function")
-      expect(typeof result.execute).toBe("function")
-      expect(typeof result.executeOrThrow).toBe("function")
+      expect(typeof result.then).toBe("function")
     })
 
     it("should call .delete() when softDelete is false (hard delete)", async () => {
@@ -449,7 +443,7 @@ describe("Entity", () => {
       const UserEntity = Entity(mockClient, "users", { softDelete: false })
 
       await UserEntity.deleteItems({ where: { status: "inactive" } })
-        .execute()
+        .many()
         .run()
 
       expect(mockClient.from).toHaveBeenCalledWith("users")
@@ -478,7 +472,7 @@ describe("Entity", () => {
       const UserEntity = Entity(mockClient, "users", { softDelete: true })
 
       await UserEntity.deleteItems({ where: { status: "inactive" } })
-        .execute()
+        .many()
         .run()
 
       expect(mockClient.from).toHaveBeenCalledWith("users")

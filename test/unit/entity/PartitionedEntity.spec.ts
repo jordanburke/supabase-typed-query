@@ -232,8 +232,7 @@ describe("PartitionedEntity", () => {
       expect(result).toBeDefined()
       expect(typeof result.many).toBe("function")
       expect(typeof result.manyOrThrow).toBe("function")
-      expect(typeof result.execute).toBe("function")
-      expect(typeof result.executeOrThrow).toBe("function")
+      expect(typeof result.then).toBe("function")
     })
   })
 
@@ -254,8 +253,7 @@ describe("PartitionedEntity", () => {
       expect(result).toBeDefined()
       expect(typeof result.one).toBe("function")
       expect(typeof result.oneOrThrow).toBe("function")
-      expect(typeof result.execute).toBe("function")
-      expect(typeof result.executeOrThrow).toBe("function")
+      expect(typeof result.then).toBe("function")
     })
 
     it("should accept multiple where conditions", () => {
@@ -309,8 +307,7 @@ describe("PartitionedEntity", () => {
       expect(result).toBeDefined()
       expect(typeof result.many).toBe("function")
       expect(typeof result.manyOrThrow).toBe("function")
-      expect(typeof result.execute).toBe("function")
-      expect(typeof result.executeOrThrow).toBe("function")
+      expect(typeof result.then).toBe("function")
     })
 
     it("should accept wherein conditions", () => {
@@ -367,8 +364,7 @@ describe("PartitionedEntity", () => {
       expect(result).toBeDefined()
       expect(typeof result.many).toBe("function")
       expect(typeof result.manyOrThrow).toBe("function")
-      expect(typeof result.execute).toBe("function")
-      expect(typeof result.executeOrThrow).toBe("function")
+      expect(typeof result.then).toBe("function")
     })
 
     it("should accept custom identity column", () => {

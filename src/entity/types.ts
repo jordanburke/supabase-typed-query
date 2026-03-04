@@ -2,7 +2,7 @@
  * Shared type definitions for Entity and PartitionedEntity
  */
 
-import type { EntityWhereConditions, MultiExecution, Query, SingleExecution } from "@/query/Query"
+import type { EntityWhereConditions, Query } from "@/query/Query"
 import type {
   Database,
   DatabaseSchema,
@@ -195,18 +195,45 @@ export type DeleteItemsParams<Row extends object = EmptyObject> = {
 // Mutation Query Wrappers
 // =============================================================================
 
-/**
- * Wrapper type for multi-result mutation operations that implements standard execution interface
- */
-export type MutationMultiExecution<T> = MultiExecution<T>
+const MUTATION_NOT_EXECUTED_ERROR =
+  "Query builder awaited without calling a terminal method. Call .manyOrThrow() / .oneOrThrow() or .many() / .one() before awaiting."
 
 /**
- * Wrapper type for single-result mutation operations that implements standard execution interface
+ * Mutation-specific execution interface for multi-result operations.
+ *
+ * Provides both lazy Task-based execution and eager Promise-based execution.
+ * The redundant `execute()`/`executeOrThrow()` aliases are removed — use
+ * `many()`/`manyOrThrow()` which clearly signal cardinality.
+ *
+ * Includes a poison `.then()` that throws if the builder is accidentally `await`ed
+ * without calling a terminal method first.
  */
-export type MutationSingleExecution<T> = SingleExecution<T>
+export type MutationMultiExecution<T> = {
+  many(): Task<Error, List<T>>
+  manyOrThrow(): Promise<List<T>>
+  /** @internal Poison pill — throws if builder is awaited without calling a terminal method */
+  then(onfulfilled?: unknown, onrejected?: unknown): never
+}
 
 /**
- * Creates a multi-result mutation query that implements the standard execution interface
+ * Mutation-specific execution interface for single-result operations.
+ *
+ * Provides both lazy Task-based execution and eager Promise-based execution.
+ * The redundant `execute()`/`executeOrThrow()` aliases are removed — use
+ * `one()`/`oneOrThrow()` which clearly signal cardinality.
+ *
+ * Includes a poison `.then()` that throws if the builder is accidentally `await`ed
+ * without calling a terminal method first.
+ */
+export type MutationSingleExecution<T> = {
+  one(): Task<Error, Option<T>>
+  oneOrThrow(): Promise<T>
+  /** @internal Poison pill — throws if builder is awaited without calling a terminal method */
+  then(onfulfilled?: unknown, onrejected?: unknown): never
+}
+
+/**
+ * Creates a multi-result mutation query.
  */
 export function MultiMutationQuery<T>(task: Task<Error, List<T>>): MutationMultiExecution<T> {
   return {
@@ -214,15 +241,14 @@ export function MultiMutationQuery<T>(task: Task<Error, List<T>>): MutationMulti
     manyOrThrow: async (): Promise<List<T>> => {
       return task.runOrThrow()
     },
-    execute: () => task,
-    executeOrThrow: async (): Promise<List<T>> => {
-      return task.runOrThrow()
+    then(): never {
+      throw new Error(MUTATION_NOT_EXECUTED_ERROR)
     },
   }
 }
 
 /**
- * Creates a single-result mutation query that implements the standard execution interface
+ * Creates a single-result mutation query.
  */
 export function SingleMutationQuery<T>(task: Task<Error, T>): MutationSingleExecution<T> {
   return {
@@ -230,10 +256,8 @@ export function SingleMutationQuery<T>(task: Task<Error, T>): MutationSingleExec
     oneOrThrow: async (): Promise<T> => {
       return task.runOrThrow() as Promise<T>
     },
-    execute: () => task.map((value: T) => Option(value)),
-    executeOrThrow: async (): Promise<Option<T>> => {
-      const value = await task.runOrThrow()
-      return Option(value) as Option<T>
+    then(): never {
+      throw new Error(MUTATION_NOT_EXECUTED_ERROR)
     },
   }
 }
