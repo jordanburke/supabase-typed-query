@@ -30,10 +30,8 @@ export type {
   ComparisonOperators,
   EntityQuery,
   EntityWhereConditions,
-  ExecutableQuery,
   IsConditions,
   MappedQuery,
-  MultiExecution,
   Query,
   QueryBuilderConfig,
   QueryCondition,
@@ -45,7 +43,6 @@ export type {
   RpcMultiExecution,
   RpcOptions,
   RpcSingleExecution,
-  SingleExecution,
   SoftDeleteMode,
   WhereConditions,
 } from "./query"

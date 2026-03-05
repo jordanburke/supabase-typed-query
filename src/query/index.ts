@@ -21,10 +21,8 @@ export type {
   ComparisonOperators,
   EntityQuery,
   EntityWhereConditions,
-  ExecutableQuery,
   IsConditions,
   MappedQuery,
-  MultiExecution,
   Query,
   QueryBuilderConfig,
   QueryCondition,
@@ -32,7 +30,6 @@ export type {
   QueryOrderParams,
   QueryWhereinParams,
   QueryWhereParams,
-  SingleExecution,
   SoftDeleteMode,
   WhereConditions,
 } from "./Query"

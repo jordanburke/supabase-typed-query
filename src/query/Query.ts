@@ -58,37 +58,6 @@ export type NotConditions<T extends object = EmptyObject> = {
 // Soft delete mode for controlling how deleted records are handled
 export type SoftDeleteMode = "include" | "exclude" | "only"
 
-// =============================================================================
-// Standard Execution Interfaces for Consistent OrThrow Pattern
-// =============================================================================
-
-/**
- * Base execution interface that all database operations implement
- */
-export interface ExecutableQuery<T> {
-  // Task version - lazy, returns Either on .run() (for explicit error handling)
-  execute(): Task<Error, T>
-
-  // OrThrow version (for simple error handling)
-  executeOrThrow(): Promise<T>
-}
-
-/**
- * Standard interface for operations that return a single result
- */
-export interface SingleExecution<T> extends ExecutableQuery<Option<T>> {
-  one(): Task<Error, Option<T>>
-  oneOrThrow(): Promise<T>
-}
-
-/**
- * Standard interface for operations that return multiple results
- */
-export interface MultiExecution<T> extends ExecutableQuery<List<T>> {
-  many(): Task<Error, List<T>>
-  manyOrThrow(): Promise<List<T>>
-}
-
 // Branded type support for query conditions
 export type BrandedWhereParams<T extends object = EmptyObject> = {
   [K in keyof T]?: T[K] | unknown // Simplified to avoid complex conditional types
