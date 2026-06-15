@@ -81,97 +81,95 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
       ilike?: Record<string, string>
     } = {}
 
-    if (where) {
-      // Extract top-level operators from where object
-      const {
-        gt: whereGt,
-        gte: whereGte,
-        lt: whereLt,
-        lte: whereLte,
-        neq: whereNeq,
-        like: whereLike,
-        ilike: whereIlike,
-        ...rest
-      } = where as Record<string, unknown>
+    // Extract top-level operators from where object (where is always present on QueryCondition)
+    const {
+      gt: whereGt,
+      gte: whereGte,
+      lt: whereLt,
+      lte: whereLte,
+      neq: whereNeq,
+      like: whereLike,
+      ilike: whereIlike,
+      ...rest
+    } = where as Record<string, unknown>
 
-      // Store extracted operators
-      if (whereGt) extractedOperators.gt = whereGt as Record<string, unknown>
-      if (whereGte) extractedOperators.gte = whereGte as Record<string, unknown>
-      if (whereLt) extractedOperators.lt = whereLt as Record<string, unknown>
-      if (whereLte) extractedOperators.lte = whereLte as Record<string, unknown>
-      if (whereNeq) extractedOperators.neq = whereNeq as Record<string, unknown>
-      if (whereLike) extractedOperators.like = whereLike as Record<string, string>
-      if (whereIlike) extractedOperators.ilike = whereIlike as Record<string, string>
+    // Store extracted operators
+    if (whereGt) extractedOperators.gt = whereGt as Record<string, unknown>
+    if (whereGte) extractedOperators.gte = whereGte as Record<string, unknown>
+    if (whereLt) extractedOperators.lt = whereLt as Record<string, unknown>
+    if (whereLte) extractedOperators.lte = whereLte as Record<string, unknown>
+    if (whereNeq) extractedOperators.neq = whereNeq as Record<string, unknown>
+    if (whereLike) extractedOperators.like = whereLike as Record<string, string>
+    if (whereIlike) extractedOperators.ilike = whereIlike as Record<string, string>
 
-      // Process remaining fields
-      for (const [key, value] of Object.entries(rest)) {
-        if (value && typeof value === "object" && !Array.isArray(value) && !(value instanceof Date)) {
-          // Check if it's an operator object
-          const ops = value as Record<string, unknown>
-          if (ops.gte !== undefined) {
-            extractedOperators.gte = {
-              ...extractedOperators.gte,
-              [key]: ops.gte,
-            }
+    // Process remaining fields
+    Object.entries(rest).forEach(([key, value]) => {
+      if (value && typeof value === "object" && !Array.isArray(value) && !(value instanceof Date)) {
+        // Check if it's an operator object
+        const ops = value as Record<string, unknown>
+        if (ops.gte !== undefined) {
+          extractedOperators.gte = {
+            ...extractedOperators.gte,
+            [key]: ops.gte,
           }
-          if (ops.gt !== undefined) {
-            extractedOperators.gt = { ...extractedOperators.gt, [key]: ops.gt }
+        }
+        if (ops.gt !== undefined) {
+          extractedOperators.gt = { ...extractedOperators.gt, [key]: ops.gt }
+        }
+        if (ops.lte !== undefined) {
+          extractedOperators.lte = {
+            ...extractedOperators.lte,
+            [key]: ops.lte,
           }
-          if (ops.lte !== undefined) {
-            extractedOperators.lte = {
-              ...extractedOperators.lte,
-              [key]: ops.lte,
-            }
+        }
+        if (ops.lt !== undefined) {
+          extractedOperators.lt = { ...extractedOperators.lt, [key]: ops.lt }
+        }
+        if (ops.neq !== undefined) {
+          extractedOperators.neq = {
+            ...extractedOperators.neq,
+            [key]: ops.neq,
           }
-          if (ops.lt !== undefined) {
-            extractedOperators.lt = { ...extractedOperators.lt, [key]: ops.lt }
+        }
+        if (ops.like !== undefined) {
+          extractedOperators.like = {
+            ...extractedOperators.like,
+            [key]: ops.like as string,
           }
-          if (ops.neq !== undefined) {
-            extractedOperators.neq = {
-              ...extractedOperators.neq,
-              [key]: ops.neq,
-            }
+        }
+        if (ops.ilike !== undefined) {
+          extractedOperators.ilike = {
+            ...extractedOperators.ilike,
+            [key]: ops.ilike as string,
           }
-          if (ops.like !== undefined) {
-            extractedOperators.like = {
-              ...extractedOperators.like,
-              [key]: ops.like as string,
-            }
+        }
+        if (ops.in !== undefined) {
+          // Handle IN operator
+          if (!wherein) {
+            const cond = condition as unknown as Record<string, unknown>
+            cond.wherein = {}
           }
-          if (ops.ilike !== undefined) {
-            extractedOperators.ilike = {
-              ...extractedOperators.ilike,
-              [key]: ops.ilike as string,
-            }
+          const whereinObj = condition.wherein as Record<string, unknown>
+          whereinObj[key] = ops.in
+        }
+        if (ops.is !== undefined) {
+          // Handle IS operator
+          if (!is) {
+            const cond = condition as unknown as Record<string, unknown>
+            cond.is = {}
           }
-          if (ops.in !== undefined) {
-            // Handle IN operator
-            if (!wherein) {
-              const cond = condition as unknown as Record<string, unknown>
-              cond.wherein = {}
-            }
-            const whereinObj = condition.wherein as Record<string, unknown>
-            whereinObj[key] = ops.in
-          }
-          if (ops.is !== undefined) {
-            // Handle IS operator
-            if (!is) {
-              const cond = condition as unknown as Record<string, unknown>
-              cond.is = {}
-            }
-            const isObj = condition.is as Record<string, unknown>
-            isObj[key] = ops.is
-          }
-          // If no operators found, treat as regular value
-          if (!ops.gte && !ops.gt && !ops.lte && !ops.lt && !ops.neq && !ops.like && !ops.ilike && !ops.in && !ops.is) {
-            processedWhere[key] = value
-          }
-        } else {
-          // Regular value
+          const isObj = condition.is as Record<string, unknown>
+          isObj[key] = ops.is
+        }
+        // If no operators found, treat as regular value
+        if (!ops.gte && !ops.gt && !ops.lte && !ops.lt && !ops.neq && !ops.like && !ops.ilike && !ops.in && !ops.is) {
           processedWhere[key] = value
         }
+      } else {
+        // Regular value
+        processedWhere[key] = value
       }
-    }
+    })
 
     // Merge extracted operators with explicitly passed operators
     const mergedGt = { ...gt, ...extractedOperators.gt }
@@ -347,8 +345,10 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
       .map((condition) => {
         const parts: string[] = []
 
-        // Add WHERE conditions (only the varying ones)
-        Object.entries(condition.where).forEach(([key, value]) => {
+        // Add WHERE conditions (only the varying ones). Values are serialized to
+        // PostgREST filter strings here, so treat them as unknown — a column value
+        // can legitimately be null (IS NULL) at this boundary.
+        Object.entries(condition.where as Record<string, unknown>).forEach(([key, value]) => {
           if (value === null) {
             parts.push(`${key}.is.null`)
           } else {
