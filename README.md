@@ -29,10 +29,10 @@ yarn add supabase-typed-query functype
 
 | Dependency              | Version    | Notes                               |
 | ----------------------- | ---------- | ----------------------------------- |
-| `@supabase/supabase-js` | `^2.0.0`   | Tested with 2.86.x                  |
-| `functype`              | `>=0.20.1` | Required for error handling         |
+| `@supabase/supabase-js` | `^2.0.0`   | Tested with 2.108.x                 |
+| `functype`              | `>=1.4.1`  | Required for error handling         |
 | TypeScript              | `>=5.0`    | Recommended for best type inference |
-| Node.js                 | `>=18`     | Required                            |
+| Node.js                 | `>=22 <25` | Required                            |
 
 ## Quick Start
 
@@ -93,16 +93,16 @@ const post = await PostEntity.getItem({
   where: { status: "published" },
 }).one()
 
-// Add posts
+// Add posts (multi-result -> manyOrThrow)
 const newPosts = await PostEntity.addItems({
   items: [{ title: "New Post", content: "Content here", status: "draft" }],
-}).execute()
+}).manyOrThrow()
 
-// Update a post
+// Update a post (single-result -> oneOrThrow; Prisma-style { where, data })
 const updated = await PostEntity.updateItem({
-  id: "post-123",
-  item: { status: "published" },
-}).execute()
+  where: { id: "post-123" },
+  data: { status: "published" },
+}).oneOrThrow()
 ```
 
 ## Advanced Usage
@@ -403,7 +403,7 @@ const posts = await query(supabase, "posts", {
 
 - TypeScript 5.0+
 - Supabase JS Client v2
-- functype 0.14+
+- functype 1.4.1+
 
 ## License
 

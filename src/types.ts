@@ -150,6 +150,60 @@ export type TableUpdate<
 > = ValidSchema<DB, S>["Tables"][T]["Update"]
 
 // =============================================================================
+// Schema Augmentation
+// =============================================================================
+
+/**
+ * The shape of a single table definition (Row/Insert/Update).
+ * Used as the constraint for ad-hoc table augmentation via {@link WithTable}.
+ */
+export type TableDefinition = {
+  Row: object
+  Insert: object
+  Update: object
+}
+
+/**
+ * Augments a database type with an additional table in the given schema, without
+ * editing generated types. Useful when a table exists in the database but has not
+ * yet been picked up by `supabase gen types` (e.g. a freshly added migration).
+ *
+ * The returned type preserves every other schema and table, so it can be passed
+ * straight to `Entity` / `PartitionedEntity` as the `DB` generic.
+ *
+ * @typeParam DB - The base database schema type (e.g. generated `Database`)
+ * @typeParam S - The schema to augment
+ * @typeParam Name - The name of the table to add
+ * @typeParam Def - The table's `{ Row; Insert; Update }` definition
+ *
+ * @example
+ * ```typescript
+ * type WithDigestHistory = WithTable<
+ *   Database,
+ *   "agent_schedule",
+ *   "digest_history",
+ *   { Row: DbDigestHistory; Insert: DbDigestHistoryInsert; Update: Partial<DbDigestHistory> }
+ * >
+ *
+ * const entity = PartitionedEntity<"digest_history", UserId, WithDigestHistory, "agent_schedule">(
+ *   client, "digest_history", { partitionField: "user_id", softDelete: false, schema: "agent_schedule" }
+ * )
+ * ```
+ */
+export type WithTable<
+  DB extends DatabaseSchema,
+  S extends SchemaNames<DB>,
+  Name extends string,
+  Def extends TableDefinition,
+> = {
+  [K in keyof DB]: K extends S
+    ? Omit<ValidSchema<DB, S>, "Tables"> & {
+        Tables: ValidSchema<DB, S>["Tables"] & { [P in Name]: Def }
+      }
+    : DB[K]
+}
+
+// =============================================================================
 // Generic View Types
 // =============================================================================
 

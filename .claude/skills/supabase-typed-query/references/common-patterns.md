@@ -33,7 +33,7 @@ const PostEntity = Entity<"posts", Database>(client, "posts", { softDelete: true
 // Single item
 const [post] = await PostEntity.addItems({
   items: [{ title: "New Post", author_id: userId, status: "draft" }],
-}).executeOrThrow()
+}).manyOrThrow()
 
 // Multiple items
 const posts = await PostEntity.addItems({
@@ -41,23 +41,23 @@ const posts = await PostEntity.addItems({
     { title: "Post 1", author_id: userId, status: "draft" },
     { title: "Post 2", author_id: userId, status: "draft" },
   ],
-}).executeOrThrow()
+}).manyOrThrow()
 ```
 
 ### Update Operations
 
 ```typescript
-// Update single item by ID
+// Update single item by ID (single-result -> oneOrThrow)
 const updated = await PostEntity.updateItem({
   where: { id: postId },
   data: { status: "published", published_at: new Date().toISOString() },
-}).executeOrThrow()
+}).oneOrThrow()
 
-// Update multiple items matching condition
+// Update multiple items matching condition (multi-result -> manyOrThrow)
 const archived = await PostEntity.updateItems({
   where: { status: "draft", created_at: { lt: cutoffDate } },
   data: { status: "archived" },
-}).executeOrThrow()
+}).manyOrThrow()
 ```
 
 ### Upsert Operations
@@ -69,13 +69,13 @@ const upserted = await PostEntity.upsertItems({
     { id: "existing-id", title: "Updated Title" },
     { id: "new-id", title: "New Post", author_id: userId },
   ],
-}).executeOrThrow()
+}).manyOrThrow()
 
 // Upsert with custom identity column
 const result = await PostEntity.upsertItems({
   items: [{ external_id: "ext-123", title: "Synced Post" }],
   identity: "external_id",
-}).executeOrThrow()
+}).manyOrThrow()
 ```
 
 ## OR Query Patterns
@@ -188,6 +188,40 @@ const tenantId = "tenant-123" as TenantId
 const posts = await TenantPostEntity.getItems(tenantId, {}).manyOrThrow()
 ```
 
+## Schema Augmentation Patterns
+
+### Adding a Table Missing From Generated Types
+
+When a migration exists but `supabase gen types` hasn't been re-run, use `WithTable`
+to layer the table onto your generated `Database` type — no hand-rolled intersections
+and no editing generated files.
+
+```typescript
+import { PartitionedEntity, WithTable } from "supabase-typed-query"
+import type { Database } from "@your-org/shared"
+
+type DbDigestHistory = { id: string; user_id: string; generated_at: string }
+
+// Augment Database with the not-yet-generated table
+type WithDigestHistory = WithTable<
+  Database,
+  "agent_schedule",
+  "digest_history",
+  { Row: DbDigestHistory; Insert: DbDigestHistory; Update: Partial<DbDigestHistory> }
+>
+
+// Pass the augmented type as the DB generic — every other schema/table is preserved
+const DigestEntity = PartitionedEntity<"digest_history", UserId, WithDigestHistory, "agent_schedule">(
+  client,
+  "digest_history",
+  { partitionField: "user_id", softDelete: false, schema: "agent_schedule" },
+)
+```
+
+> Prefer this over `{ public: Database["agent_schedule"] }` adapter hacks or
+> `Entity<any, any, any>(client as any, ...)`. Once types are regenerated, drop the
+> `WithTable` wrapper and use `Database` directly.
+
 ## Soft Delete Patterns
 
 ### Default Behavior (Exclude Deleted)
@@ -219,11 +253,11 @@ const deletedPosts = await PostEntity.getItems({}).onlyDeleted().manyOrThrow()
 // When softDelete: true, deleteItem sets the deleted timestamp automatically
 const PostEntity = Entity<"posts", Database>(client, "posts", { softDelete: true })
 
-// Soft delete a single item (sets deleted = timestamp)
-await PostEntity.deleteItem({ where: { id: postId } }).executeOrThrow()
+// Soft delete a single item (sets deleted = timestamp; single-result -> oneOrThrow)
+await PostEntity.deleteItem({ where: { id: postId } }).oneOrThrow()
 
-// Soft delete multiple items
-await PostEntity.deleteItems({ where: { status: "archived" } }).executeOrThrow()
+// Soft delete multiple items (multi-result -> manyOrThrow)
+await PostEntity.deleteItems({ where: { status: "archived" } }).manyOrThrow()
 ```
 
 ### Hard Delete (Physical Removal)
@@ -232,21 +266,21 @@ await PostEntity.deleteItems({ where: { status: "archived" } }).executeOrThrow()
 // When softDelete: false, deleteItem physically removes the row
 const LogEntity = Entity<"logs", Database>(client, "logs", { softDelete: false })
 
-// Permanently delete a single item
-await LogEntity.deleteItem({ where: { id: logId } }).executeOrThrow()
+// Permanently delete a single item (single-result -> oneOrThrow)
+await LogEntity.deleteItem({ where: { id: logId } }).oneOrThrow()
 
-// Permanently delete multiple items
-await LogEntity.deleteItems({ where: { created_at: { lt: cutoffDate } } }).executeOrThrow()
+// Permanently delete multiple items (multi-result -> manyOrThrow)
+await LogEntity.deleteItems({ where: { created_at: { lt: cutoffDate } } }).manyOrThrow()
 ```
 
 ### Restore Soft-Deleted Items
 
 ```typescript
-// To restore, manually clear the deleted timestamp
+// To restore, manually clear the deleted timestamp (single-result -> oneOrThrow)
 await PostEntity.updateItem({
   where: { id: postId },
   data: { deleted: null },
-}).executeOrThrow()
+}).oneOrThrow()
 ```
 
 ## Error Handling Patterns
@@ -299,7 +333,7 @@ async function createUser(data: UserInput): Promise<Either<string, User>> {
   try {
     const [user] = await UserEntity.addItems({
       items: [data],
-    }).executeOrThrow()
+    }).manyOrThrow()
     return Right(user)
   } catch (error) {
     if (error instanceof SupabaseError && error.code === "23505") {
@@ -337,6 +371,26 @@ async function getPostsAfter(cursor: string | null, limit: number = 20) {
 
   return await baseQuery.limit(limit).manyOrThrow()
 }
+```
+
+### Entity getItems with limit/offset
+
+`getItems` accepts `limit`/`offset` directly in its params — equivalent to chaining
+`.limit(n)` / `.offset(n)` on the returned `Query`. Prefer this over fetching the full
+result set and slicing in JS (which loads every row into memory).
+
+```typescript
+// ✅ Limit applied at the database (PostgREST .limit / .range)
+async function getRecentDigests(userId: UserId, limit = 5) {
+  return await DigestEntity.getItems(userId, {
+    order: ["generated_at", { ascending: false }],
+    limit,
+  }).manyOrThrow()
+}
+
+// ❌ Avoid: fetches every row, then slices in memory
+const all = await DigestEntity.getItems(userId, { order: ["generated_at", { ascending: false }] }).manyOrThrow()
+const recent = all.toArray().slice(0, limit)
 ```
 
 ## Complex Query Examples

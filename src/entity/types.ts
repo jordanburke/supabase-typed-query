@@ -84,6 +84,16 @@ export type OrderParams<T extends object = EmptyObject> = {
   order?: [keyof T & string, { ascending?: boolean; nullsFirst?: boolean }]
 }
 
+export type LimitParams = {
+  /** Maximum number of rows to return */
+  limit?: number
+}
+
+export type OffsetParams = {
+  /** Number of rows to skip before returning results */
+  offset?: number
+}
+
 export type ComparisonParams<T extends object = EmptyObject> = {
   gte?: TypedRecord<T, number | string | Date>
   gt?: TypedRecord<T, number | string | Date>
@@ -116,7 +126,9 @@ export type GetItemsParams<T extends object = EmptyObject> = WhereParams<T> &
   WhereinParams<T> &
   OrderParams<T> &
   ComparisonParams<T> &
-  NotParams<T>
+  NotParams<T> &
+  LimitParams &
+  OffsetParams
 
 export type AddItemsParams<
   T extends TableNames<DB, S>,

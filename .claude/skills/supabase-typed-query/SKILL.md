@@ -267,44 +267,46 @@ const PostEntity = Entity<"posts", Database>(client, "posts", { softDelete: true
 // Get single item
 const post = await PostEntity.getItem({ id: "123" }).oneOrThrow()
 
-// Get multiple items
+// Get multiple items (limit/offset are accepted in params, same as chaining .limit()/.offset())
 const posts = await PostEntity.getItems({
   where: { status: "published" },
   order: ["created_at", { ascending: false }],
+  limit: 10,
+  offset: 0,
 }).manyOrThrow()
 
-// Add items
+// Add items (multi-result -> manyOrThrow)
 const created = await PostEntity.addItems({
   items: [{ title: "New Post", status: "draft" }],
-}).executeOrThrow()
+}).manyOrThrow()
 
-// Update single item
+// Update single item (single-result -> oneOrThrow)
 const updated = await PostEntity.updateItem({
   where: { id: "123" },
   data: { status: "published" },
-}).executeOrThrow()
+}).oneOrThrow()
 
-// Update multiple items
+// Update multiple items (multi-result -> manyOrThrow)
 const bulkUpdated = await PostEntity.updateItems({
   where: { status: "draft" },
   data: { status: "archived" },
-}).executeOrThrow()
+}).manyOrThrow()
 
-// Upsert items
+// Upsert items (multi-result -> manyOrThrow)
 const upserted = await PostEntity.upsertItems({
   items: [{ id: "123", title: "Updated Title" }],
   identity: "id",
-}).executeOrThrow()
+}).manyOrThrow()
 
-// Delete single item (soft delete when softDelete: true)
+// Delete single item (soft delete when softDelete: true; single-result -> oneOrThrow)
 const deleted = await PostEntity.deleteItem({
   where: { id: "123" },
-}).executeOrThrow()
+}).oneOrThrow()
 
-// Delete multiple items
+// Delete multiple items (multi-result -> manyOrThrow)
 const deletedMany = await PostEntity.deleteItems({
   where: { status: "archived" },
-}).executeOrThrow()
+}).manyOrThrow()
 ```
 
 **Note:** When `softDelete: true`, delete methods set the `deleted` timestamp instead of physically removing rows. When `softDelete: false`, rows are permanently removed.
@@ -457,6 +459,34 @@ const results = await query<"items", Database>(
 - If no schema is specified, queries use the default `public` schema (via `client.from()`)
 - When a schema is specified, queries use `client.schema(name).from(table)`
 
+### Augmenting Types for Not-Yet-Generated Tables
+
+When a table exists in the database (e.g. a fresh migration) but hasn't been picked up
+by `supabase gen types`, use `WithTable` to layer it onto your `Database` type instead of
+hand-rolling intersections or falling back to `Entity<any, any, any>`:
+
+```typescript
+import { PartitionedEntity, WithTable } from "supabase-typed-query"
+
+type DbDigest = { id: string; user_id: string; generated_at: string }
+
+type WithDigest = WithTable<
+  Database,
+  "agent_schedule",
+  "digest_history",
+  { Row: DbDigest; Insert: DbDigest; Update: Partial<DbDigest> }
+>
+
+const DigestEntity = PartitionedEntity<"digest_history", UserId, WithDigest, "agent_schedule">(
+  client,
+  "digest_history",
+  { partitionField: "user_id", softDelete: false, schema: "agent_schedule" },
+)
+```
+
+`WithTable` preserves every other schema and table, so the result drops straight into the
+`DB` generic. Once types are regenerated, remove the wrapper and use `Database` directly.
+
 ## Soft Delete
 
 ### Configuration
@@ -509,13 +539,13 @@ const posts = await PostEntity.addItems({
     { title: "Post 1", status: "draft" },
     { title: "Post 2", status: "draft" },
   ],
-}).executeOrThrow()
+}).manyOrThrow()
 
 // Update all matching items
 const archived = await PostEntity.updateItems({
   where: { status: "draft" },
   data: { status: "archived" },
-}).executeOrThrow()
+}).manyOrThrow()
 ```
 
 ### Complex Queries

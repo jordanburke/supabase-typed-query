@@ -304,6 +304,15 @@ export function makeGetItem<
 }
 
 /**
+ * Applies optional limit/offset pagination to a query by reusing the
+ * already-wired chainable `.limit()` / `.offset()` methods.
+ */
+function applyPagination<Row extends object>(query: Query<Row>, limit?: number, offset?: number): Query<Row> {
+  const withOffset = offset !== undefined ? query.offset(offset) : query
+  return limit !== undefined ? withOffset.limit(limit) : withOffset
+}
+
+/**
  * Creates getItems method for Entity (no partition)
  */
 export function makeGetItems<
@@ -324,8 +333,10 @@ export function makeGetItems<
     like,
     ilike,
     not,
+    limit,
+    offset,
   }: GetItemsParams<TableRow<T, DB, S>> = {}) {
-    return createGetItemsQuery<T, DB, S>(
+    const query = createGetItemsQuery<T, DB, S>(
       client,
       name,
       where as WhereConditions<TableRow<T, DB, S>>,
@@ -337,6 +348,7 @@ export function makeGetItems<
       { gte, gt, lte, lt, neq, like, ilike },
       not,
     )
+    return applyPagination(query, limit, offset)
   }
 }
 
@@ -373,10 +385,25 @@ export function makePartitionedGetItems<
 >(client: SupabaseClientType<DB>, name: T, partitionField: string, softDeleteMode: SoftDeleteMode, schema?: string) {
   return function getItems(
     partitionKey: K,
-    { where, is, wherein, order, gte, gt, lte, lt, neq, like, ilike, not }: GetItemsParams<TableRow<T, DB, S>> = {},
+    {
+      where,
+      is,
+      wherein,
+      order,
+      gte,
+      gt,
+      lte,
+      lt,
+      neq,
+      like,
+      ilike,
+      not,
+      limit,
+      offset,
+    }: GetItemsParams<TableRow<T, DB, S>> = {},
   ) {
     const whereConditions = buildWhereWithPartition(partitionField, partitionKey, where)
-    return createGetItemsQuery<T, DB, S>(
+    const query = createGetItemsQuery<T, DB, S>(
       client,
       name,
       whereConditions as WhereConditions<TableRow<T, DB, S>>,
@@ -388,6 +415,7 @@ export function makePartitionedGetItems<
       { gte, gt, lte, lt, neq, like, ilike },
       not,
     )
+    return applyPagination(query, limit, offset)
   }
 }
 
@@ -746,8 +774,10 @@ export function makeViewGetItems<
     like,
     ilike,
     not,
+    limit,
+    offset,
   }: GetItemsParams<ViewRow<V, DB, S>> = {}) {
-    return createViewGetItemsQuery<V, DB, S>(
+    const query = createViewGetItemsQuery<V, DB, S>(
       client,
       name,
       where as WhereConditions<ViewRow<V, DB, S>>,
@@ -758,6 +788,7 @@ export function makeViewGetItems<
       { gte, gt, lte, lt, neq, like, ilike },
       not,
     )
+    return applyPagination(query, limit, offset)
   }
 }
 
@@ -795,10 +826,25 @@ export function makePartitionedViewGetItems<
 >(client: SupabaseClientType<DB>, name: V, partitionField: string, schema?: string) {
   return function getItems(
     partitionKey: K,
-    { where, is, wherein, order, gte, gt, lte, lt, neq, like, ilike, not }: GetItemsParams<ViewRow<V, DB, S>> = {},
+    {
+      where,
+      is,
+      wherein,
+      order,
+      gte,
+      gt,
+      lte,
+      lt,
+      neq,
+      like,
+      ilike,
+      not,
+      limit,
+      offset,
+    }: GetItemsParams<ViewRow<V, DB, S>> = {},
   ) {
     const whereConditions = buildWhereWithPartition(partitionField, partitionKey, where)
-    return createViewGetItemsQuery<V, DB, S>(
+    const query = createViewGetItemsQuery<V, DB, S>(
       client,
       name,
       whereConditions as WhereConditions<ViewRow<V, DB, S>>,
@@ -809,6 +855,7 @@ export function makePartitionedViewGetItems<
       { gte, gt, lte, lt, neq, like, ilike },
       not,
     )
+    return applyPagination(query, limit, offset)
   }
 }
 

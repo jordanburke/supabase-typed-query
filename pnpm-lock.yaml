@@ -6,10 +6,6 @@ settings:
 
 importers:
   .:
-    dependencies:
-      eslint-config-functype:
-        specifier: ^2.104.1
-        version: 2.104.1(@typescript-eslint/eslint-plugin@8.61.0(@typescript-eslint/parser@8.61.0(eslint@10.5.0)(typescript@6.0.3))(eslint@10.5.0)(typescript@6.0.3))(@typescript-eslint/parser@8.61.0(eslint@10.5.0)(typescript@6.0.3))(eslint-plugin-prettier@5.5.6(eslint-config-prettier@10.1.8(eslint@10.5.0))(eslint@10.5.0)(prettier@3.8.4))(eslint-plugin-simple-import-sort@13.0.0(eslint@10.5.0))(eslint@10.5.0)(prettier@3.8.4)
     devDependencies:
       "@supabase/supabase-js":
         specifier: ^2.108.1
@@ -23,6 +19,9 @@ importers:
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
+      eslint-config-functype:
+        specifier: ^2.104.1
+        version: 2.104.1(@typescript-eslint/eslint-plugin@8.61.0(@typescript-eslint/parser@8.61.0(eslint@10.5.0)(typescript@6.0.3))(eslint@10.5.0)(typescript@6.0.3))(@typescript-eslint/parser@8.61.0(eslint@10.5.0)(typescript@6.0.3))(eslint-plugin-prettier@5.5.6(eslint-config-prettier@10.1.8(eslint@10.5.0))(eslint@10.5.0)(prettier@3.8.4))(eslint-plugin-simple-import-sort@13.0.0(eslint@10.5.0))(eslint@10.5.0)(prettier@3.8.4)
       eslint-plugin-functional:
         specifier: ^9.0.5
         version: 9.0.5(eslint@10.5.0)(typescript@6.0.3)

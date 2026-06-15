@@ -15,6 +15,7 @@ export type {
   RpcQueryBuilder,
   SchemaNames,
   SupabaseClientType,
+  TableDefinition,
   TableInsert,
   TableNames,
   TableRow,
@@ -23,6 +24,7 @@ export type {
   ValidSchema,
   ViewNames,
   ViewRow,
+  WithTable,
 } from "./types"
 
 // Query exports
@@ -77,8 +79,10 @@ export type {
   IPartitionedViewEntity,
   IsParams,
   IViewEntity,
+  LimitParams,
   MutationMultiExecution,
   MutationSingleExecution,
+  OffsetParams,
   OrderParams,
   PartitionedEntityConfig,
   PartitionedViewEntityConfig,

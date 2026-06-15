@@ -199,7 +199,8 @@ MyEntity.deleteItems(partitionKey, { where }) // soft/hard based on config
 { id: string, where?: WhereConditions, is?: IsConditions }
 
 // GetItemsParams
-{ where?: WhereConditions, is?: IsConditions, wherein?: WhereinConditions, order?: OrderParams }
+{ where?: WhereConditions, is?: IsConditions, wherein?: WhereinConditions, order?: OrderParams, limit?: number, offset?: number }
+// Note: `limit`/`offset` in params are equivalent to chaining `.limit(n)` / `.offset(n)` on the returned Query.
 
 // AddItemsParams
 { items: TableInsert[] }
@@ -266,6 +267,8 @@ import type {
   SchemaNames,
   TypedDatabase,
   ValidSchema,
+  WithTable,
+  TableDefinition,
   DEFAULT_SCHEMA,
 } from "supabase-typed-query"
 
@@ -307,6 +310,16 @@ type CleanDB = TypedDatabase<Database>
 
 // Type-safe schema access (returns never for invalid schemas)
 type PublicSchema = ValidSchema<Database, "public">
+
+// Augment a Database with a table not yet in generated types (e.g. fresh migration)
+type WithDigest = WithTable<
+  Database,
+  "agent_schedule",
+  "digest_history",
+  { Row: DbDigestRow; Insert: DbDigestInsert; Update: Partial<DbDigestRow> }
+>
+// Use the augmented type as the DB generic; preserves all other schemas/tables:
+//   PartitionedEntity<"digest_history", UserId, WithDigest, "agent_schedule">(client, ...)
 ```
 
 ## Re-exported from functype
