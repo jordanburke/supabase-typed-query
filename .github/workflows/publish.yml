@@ -34,9 +34,6 @@ jobs:
       - name: Run validation pipeline
         run: pnpm validate
 
-      - name: Update npm
-        run: npm install -g npm@latest
-
       - name: Verify package contents
         run: |
           echo "Files to be published:"
