@@ -1,0 +1,24 @@
+# Hoist dev-tool CLIs/plugins to the root so the flat ESLint config (and other
+# tooling) can resolve them. Moved from .npmrc — pnpm 11 reads this from
+# pnpm-workspace.yaml, not the old public-hoist-pattern[] .npmrc syntax.
+publicHoistPattern:
+  - "*eslint*"
+  - "*prettier*"
+  - "*vitest*"
+  - typescript
+  - "*rimraf*"
+  - "*cross-env*"
+
+# pnpm 11 enables a 1-day release cooldown (minimumReleaseAge: 1440) by default
+# as supply-chain protection. These are first-party packages we control and
+# publish frequently, so they're always freshly released — exempt them while
+# keeping the cooldown for all third-party deps.
+minimumReleaseAgeExclude:
+  - "*functype*"
+  - ts-builds
+
+# pnpm 11 gates dependency build/install scripts via allowBuilds. esbuild ships
+# a prebuilt platform binary (via its @esbuild/<platform> optional dep), so its
+# install script is unnecessary.
+allowBuilds:
+  esbuild: false
