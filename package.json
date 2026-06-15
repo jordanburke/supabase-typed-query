@@ -84,7 +84,6 @@
     "cross-env": "^10.1.0",
     "dotenv": "^17.4.2",
     "eslint-config-functype": "^2.104.1",
-    "eslint-plugin-functional": "^9.0.5",
     "functype": "^1.4.1",
     "globals": "^17.6.0",
     "rimraf": "^6.1.3",

@@ -2,6 +2,8 @@
  * Shared internal functions for Entity and PartitionedEntity (DRY)
  */
 
+import type { IOTask as Task, List } from "functype"
+
 import {
   addEntities,
   deleteEntities,
@@ -24,8 +26,6 @@ import type {
   ViewNames,
   ViewRow,
 } from "@/types"
-
-import type { IOTask as Task, List } from "functype"
 
 import type {
   DeleteItemParams,

@@ -2,6 +2,9 @@
  * Shared type definitions for Entity and PartitionedEntity
  */
 
+import type { Brand, IOTask as Task, List } from "functype"
+import { Option } from "functype"
+
 import type { EntityWhereConditions, Query } from "@/query/Query"
 import type {
   Database,
@@ -15,9 +18,6 @@ import type {
   ViewNames,
   ViewRow,
 } from "@/types"
-
-import type { Brand, IOTask as Task, List } from "functype"
-import { Option } from "functype"
 
 // =============================================================================
 // Partition Key Types

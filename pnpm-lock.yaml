@@ -22,9 +22,6 @@ importers:
       eslint-config-functype:
         specifier: ^2.104.1
         version: 2.104.1(@typescript-eslint/eslint-plugin@8.61.0(@typescript-eslint/parser@8.61.0(eslint@10.5.0)(typescript@6.0.3))(eslint@10.5.0)(typescript@6.0.3))(@typescript-eslint/parser@8.61.0(eslint@10.5.0)(typescript@6.0.3))(eslint-plugin-prettier@5.5.6(eslint-config-prettier@10.1.8(eslint@10.5.0))(eslint@10.5.0)(prettier@3.8.4))(eslint-plugin-simple-import-sort@13.0.0(eslint@10.5.0))(eslint@10.5.0)(prettier@3.8.4)
-      eslint-plugin-functional:
-        specifier: ^9.0.5
-        version: 9.0.5(eslint@10.5.0)(typescript@6.0.3)
       functype:
         specifier: ^1.4.1
         version: 1.4.1
@@ -1155,11 +1152,6 @@ packages:
     resolution:
       { integrity: sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ== }
 
-  deepmerge-ts@7.1.5:
-    resolution:
-      { integrity: sha512-HOJkrhaYsweh+W+e74Yn7YStZOilkoPb6fycpwNLKzSPtruFs48nYis0zy5yJz1+ktUhHxoRDJ27RQAWLIJVJw== }
-    engines: { node: ">=16.0.0" }
-
   defu@6.1.7:
     resolution:
       { integrity: sha512-7z22QmUWiQ/2d0KkdYmANbRUVABpZ9SNYyH5vx6PZ+nE5bcC0l7uFvEfHlyld/HcGBFTL536ClDt3DEcSlEJAQ== }
@@ -1204,11 +1196,6 @@ packages:
       { integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA== }
     engines: { node: ">=10" }
 
-  escape-string-regexp@5.0.0:
-    resolution:
-      { integrity: sha512-/veY75JbMK4j1yjvuUxuVsiS/hr/4iHs9FTT6cgTexxdE0Ly/glccBAkloH/DofkjRbZU3bnoj38mOmhkZ0lHw== }
-    engines: { node: ">=12" }
-
   eslint-config-functype@2.104.1:
     resolution:
       { integrity: sha512-5Q0+/v9XzdiBNPNmhwDyR8S7TvaNuW/bI96kt+Iw7JYjuMr7Q4oZWmFVx/eCzpsD2l/NSrwXu49vN+/DHwQ1tQ== }
@@ -1228,17 +1215,6 @@ packages:
     hasBin: true
     peerDependencies:
       eslint: ">=7.0.0"
-
-  eslint-plugin-functional@9.0.5:
-    resolution:
-      { integrity: sha512-RYbNpGkGu5mSN7xlezyeE7TE3S9rsliAS5FOorZoxn7126UTslcQnoVOIAOA6fMOlz6dNG3x3cd3tuzrHM6mRA== }
-    engines: { node: ">=v18.18.0" }
-    peerDependencies:
-      eslint: ^9.0.0 || ^10.0.0
-      typescript: ">=4.7.4"
-    peerDependenciesMeta:
-      typescript:
-        optional: true
 
   eslint-plugin-functype@2.104.1:
     resolution:
@@ -1483,13 +1459,6 @@ packages:
     resolution:
       { integrity: sha512-xelSayHH36ZgE7ZWhli7pW34hNbNl8Ojv5KVmkJD4hBdD3th8Tfk9vYasLM+mXWOZhFkgZfxhLSnrwRr4elSSg== }
     engines: { node: ">=0.10.0" }
-
-  is-immutable-type@5.0.4:
-    resolution:
-      { integrity: sha512-tDf0vB9dJJt/1USS2nvHJb8UsIAhs+pF6z8UZLNdhrzB+PKMrdcN45je9jhuFpaJOjJpoRhueFmFrRs5g/TNMA== }
-    peerDependencies:
-      eslint: "*"
-      typescript: ">=4.7.4"
 
   isexe@2.0.0:
     resolution:
@@ -1848,12 +1817,6 @@ packages:
         optional: true
       vite:
         optional: true
-
-  ts-declaration-location@1.0.7:
-    resolution:
-      { integrity: sha512-EDyGAwH1gO0Ausm9gV6T2nUvBgXT5kGoCMJPllOaooZ+4VvJiKBdZE7wK18N1deEowhcUptS+5GXZK8U/fvpwA== }
-    peerDependencies:
-      typescript: ">=4.0.0"
 
   ts-node@10.9.2:
     resolution:
@@ -2811,8 +2774,6 @@ snapshots:
 
   deep-is@0.1.4: {}
 
-  deepmerge-ts@7.1.5: {}
-
   defu@6.1.7: {}
 
   diff@4.0.4: {}
@@ -2856,8 +2817,6 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  escape-string-regexp@5.0.0: {}
-
   eslint-config-functype@2.104.1(@typescript-eslint/eslint-plugin@8.61.0(@typescript-eslint/parser@8.61.0(eslint@10.5.0)(typescript@6.0.3))(eslint@10.5.0)(typescript@6.0.3))(@typescript-eslint/parser@8.61.0(eslint@10.5.0)(typescript@6.0.3))(eslint-plugin-prettier@5.5.6(eslint-config-prettier@10.1.8(eslint@10.5.0))(eslint@10.5.0)(prettier@3.8.4))(eslint-plugin-simple-import-sort@13.0.0(eslint@10.5.0))(eslint@10.5.0)(prettier@3.8.4):
     dependencies:
       "@eslint/eslintrc": 3.3.5
@@ -2874,20 +2833,6 @@ snapshots:
   eslint-config-prettier@10.1.8(eslint@10.5.0):
     dependencies:
       eslint: 10.5.0
-
-  eslint-plugin-functional@9.0.5(eslint@10.5.0)(typescript@6.0.3):
-    dependencies:
-      "@typescript-eslint/utils": 8.61.0(eslint@10.5.0)(typescript@6.0.3)
-      deepmerge-ts: 7.1.5
-      escape-string-regexp: 5.0.0
-      eslint: 10.5.0
-      is-immutable-type: 5.0.4(eslint@10.5.0)(typescript@6.0.3)
-      ts-api-utils: 2.5.0(typescript@6.0.3)
-      ts-declaration-location: 1.0.7(typescript@6.0.3)
-    optionalDependencies:
-      typescript: 6.0.3
-    transitivePeerDependencies:
-      - supports-color
 
   eslint-plugin-functype@2.104.1(eslint@10.5.0):
     dependencies:
@@ -3067,16 +3012,6 @@ snapshots:
   is-glob@4.0.3:
     dependencies:
       is-extglob: 2.1.1
-
-  is-immutable-type@5.0.4(eslint@10.5.0)(typescript@6.0.3):
-    dependencies:
-      "@typescript-eslint/type-utils": 8.61.0(eslint@10.5.0)(typescript@6.0.3)
-      eslint: 10.5.0
-      ts-api-utils: 2.5.0(typescript@6.0.3)
-      ts-declaration-location: 1.0.7(typescript@6.0.3)
-      typescript: 6.0.3
-    transitivePeerDependencies:
-      - supports-color
 
   isexe@2.0.0: {}
 
@@ -3405,11 +3340,6 @@ snapshots:
       - jsdom
       - msw
       - supports-color
-
-  ts-declaration-location@1.0.7(typescript@6.0.3):
-    dependencies:
-      picomatch: 4.0.4
-      typescript: 6.0.3
 
   ts-node@10.9.2(@types/node@24.10.15)(typescript@6.0.3):
     dependencies:

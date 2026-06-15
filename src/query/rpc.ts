@@ -16,6 +16,9 @@
  * ```
  */
 
+import type { IOTask as Task } from "functype"
+import { IO, List, Option } from "functype"
+
 import type {
   Database,
   DatabaseSchema,
@@ -26,9 +29,6 @@ import type {
   SupabaseClientType,
 } from "@/types"
 import { toError } from "@/utils/errors"
-
-import type { IOTask as Task } from "functype"
-import { IO, List, Option } from "functype"
 
 // =============================================================================
 // RPC Execution Types

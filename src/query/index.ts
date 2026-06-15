@@ -1,3 +1,6 @@
+import type { IOTask as Task } from "functype"
+import { IO, List } from "functype"
+
 import type {
   Database,
   DatabaseSchema,
@@ -9,9 +12,6 @@ import type {
   TableUpdate,
 } from "@/types"
 import { toError } from "@/utils/errors"
-
-import type { IOTask as Task } from "functype"
-import { IO, List } from "functype"
 
 import type { EntityWhereConditions, Query, WhereConditions } from "./Query"
 import { createQuery } from "./QueryBuilder"

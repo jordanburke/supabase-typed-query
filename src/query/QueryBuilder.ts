@@ -1,8 +1,8 @@
-import type { Database, DatabaseSchema, SupabaseClientType, TableNames, TableRow } from "@/types"
-import { toError } from "@/utils/errors"
-
 import type { Brand, IOTask as Task } from "functype"
 import { IO, List, Option } from "functype"
+
+import type { Database, DatabaseSchema, SupabaseClientType, TableNames, TableRow } from "@/types"
+import { toError } from "@/utils/errors"
 
 import type { IsConditions, MappedQuery, Query, QueryBuilderConfig, QueryCondition, WhereConditions } from "./Query"
 

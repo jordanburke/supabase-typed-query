@@ -1,6 +1,6 @@
-import type { EmptyObject } from "@/types"
-
 import type { Brand, IOTask as Task, List, Option } from "functype"
+
+import type { EmptyObject } from "@/types"
 
 // Comparison operators for advanced queries
 export type ComparisonOperators<V> = {
