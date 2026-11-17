@@ -10,6 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 pnpm validate                # 🚀 Main command: format, lint, typecheck, test, and build
+pnpm run ci                  # validate's checks without fixing, as CI runs them (type `run`: `pnpm ci` is a clean install)
 ```
 
 ### Individual Commands

@@ -213,9 +213,7 @@ RPC return types are inferred from your database schema. Your Database type shou
 ```typescript
 interface Database {
   public: {
-    Tables: {
-      /* ... */
-    }
+    Tables: {/* ... */}
     Functions: {
       get_user_stats: {
         Args: { user_id: string }

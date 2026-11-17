@@ -44,3 +44,5 @@ temp/
 
 # OS files
 Thumbs.db
+# ts-builds lint report sidecar
+.ts-builds

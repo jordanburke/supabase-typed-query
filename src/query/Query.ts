@@ -60,7 +60,8 @@ export type SoftDeleteMode = "include" | "exclude" | "only"
 
 // Branded type support for query conditions
 export type BrandedWhereParams<T extends object = EmptyObject> = {
-  [K in keyof T]?: T[K] | unknown // Simplified to avoid complex conditional types
+  [K in keyof T]?:
+    T[K] | unknown // Simplified to avoid complex conditional types
 }
 
 // Helper type for branded field values

@@ -14,8 +14,9 @@ publicHoistPattern:
 # publish frequently, so they're always freshly released — exempt them while
 # keeping the cooldown for all third-party deps.
 minimumReleaseAgeExclude:
-  - "*functype*"
   - ts-builds
+  - somamcp
+  - "*functype*"
 
 # pnpm 11 gates dependency build/install scripts via allowBuilds. esbuild ships
 # a prebuilt platform binary (via its @esbuild/<platform> optional dep), so its
