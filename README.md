@@ -430,6 +430,7 @@ pnpm validate
 ```bash
 # Development
 pnpm validate          # Run full validation: format, lint, typecheck, test, build
+pnpm run ci            # validate's checks without fixing, as CI runs them (type `run`: `pnpm ci` is a clean install)
 pnpm test             # Run tests
 pnpm test:watch       # Run tests in watch mode
 pnpm test:coverage    # Run tests with coverage

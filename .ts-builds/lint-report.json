@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "package": "supabase-typed-query",
+  "timestamp": "2026-11-17T17:40:14.001Z",
+  "fix": false,
+  "errorCount": 0,
+  "warningCount": 0,
+  "fixableErrorCount": 0,
+  "fixableWarningCount": 0,
+  "fileCount": 14,
+  "files": [],
+  "rules": {
+    "@typescript-eslint/no-explicit-any": {
+      "errors": 0,
+      "warnings": 0,
+      "silenced": 34
+    }
+  }
+}

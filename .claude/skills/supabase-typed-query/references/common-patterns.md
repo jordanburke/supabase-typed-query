@@ -123,12 +123,10 @@ interface UserDTO {
 }
 
 const dtos = await query<"users", Database>(client, "users", {})
-  .map(
-    (user): UserDTO => ({
-      id: user.id,
-      displayName: `${user.first_name} ${user.last_name}`,
-    }),
-  )
+  .map((user): UserDTO => ({
+    id: user.id,
+    displayName: `${user.first_name} ${user.last_name}`,
+  }))
   .manyOrThrow()
 ```
 
