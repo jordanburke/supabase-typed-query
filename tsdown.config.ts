@@ -15,7 +15,9 @@ export default defineConfig({
   outDir: "dist",
   platform: "neutral",
   treeshake: true,
-  external: ["@supabase/supabase-js", "functype", /^@supabase\//, /^functype\//],
+  deps: {
+    neverBundle: ["@supabase/supabase-js", "functype", /^@supabase\//, /^functype\//],
+  },
   outExtensions: () => ({
     js: ".js",
     dts: ".d.ts",
