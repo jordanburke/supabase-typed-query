@@ -30,7 +30,7 @@ yarn add supabase-typed-query functype
 | Dependency              | Version    | Notes                               |
 | ----------------------- | ---------- | ----------------------------------- |
 | `@supabase/supabase-js` | `^2.0.0`   | Tested with 2.108.x                 |
-| `functype`              | `>=2.0.0`  | Required for error handling         |
+| `functype`              | `^2.0.0`   | Required for error handling         |
 | TypeScript              | `>=5.0`    | Recommended for best type inference |
 | Node.js                 | `>=22 <25` | Required                            |
 

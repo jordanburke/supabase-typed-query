@@ -593,7 +593,9 @@ const createMappedQuery = <T extends TableNames<DB>, DB extends DatabaseSchema =
     // The mapper is the caller's code: run it as a typed step, so a throw in it is a Left from
     // run(), as on functype 1. Inside a plain IO.map, functype 2 makes it a defect that rejects run().
     one: (): Task<Error, Option<U>> => {
-      return sourceQuery.one().flatMap((maybeItem) => IO.tryCatch(() => maybeItem.map(mapFn), toError))
+      return sourceQuery
+        .one()
+        .flatMap((maybeItem) => IO.tryCatch(() => maybeItem.flatMap((item) => Option(mapFn(item))), toError))
     },
 
     many: (): Task<Error, List<U>> => {
@@ -601,7 +603,9 @@ const createMappedQuery = <T extends TableNames<DB>, DB extends DatabaseSchema =
     },
 
     first: (): Task<Error, Option<U>> => {
-      return sourceQuery.first().flatMap((maybeItem) => IO.tryCatch(() => maybeItem.map(mapFn), toError))
+      return sourceQuery
+        .first()
+        .flatMap((maybeItem) => IO.tryCatch(() => maybeItem.flatMap((item) => Option(mapFn(item))), toError))
     },
 
     /**

@@ -56,6 +56,14 @@ describe("Query Functional Operations", () => {
       expect(result.orThrow().orUndefined()).toBe("Alice")
     })
 
+    it("gives None, not Some(null), when the mapper returns null", async () => {
+      const client = createMockClientWithData([{ id: "1", name: "Alice" }])
+      const mapped = query(client, "users", {}).map((): string | null => null)
+
+      expect((await mapped.one().run()).orThrow().isNone()).toBe(true)
+      expect((await mapped.first().run()).orThrow().isNone()).toBe(true)
+    })
+
     it("returns Left, not a rejection, when the mapper throws", async () => {
       const client = createMockClientWithData([{ id: "1", name: "Alice" }])
       const mapped = query(client, "users", {}).map((): string => {
