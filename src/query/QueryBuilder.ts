@@ -271,7 +271,7 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
    * Apply multiple conditions with OR logic
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const applyOrConditions = (query: any, conditions: QueryCondition<TableRow<T, DB>>[]): any => {
+  const applyOrConditions = (query: any, conditions: ReadonlyArray<QueryCondition<TableRow<T, DB>>>): any => {
     // Start with select
     const selectQuery = query.select("*")
 
@@ -290,41 +290,28 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
       return selectQuery
     })()
 
-    // Separate common conditions from varying conditions
-    const commonConditions = new Map<string, unknown>()
-    const varyingConditions: QueryCondition<TableRow<T, DB>>[] = []
-
-    // Find conditions that are common across all OR branches
+    // Conditions common to every OR branch are applied once, outside the OR
     const firstCond = conditions[0]
-    if (conditions.length > 0 && firstCond) {
-      // Check each key-value pair in the first condition
-      Object.entries(firstCond.where).forEach(([key, value]) => {
-        // If this key-value pair exists in ALL conditions, it's common
-        const isCommonCondition = conditions.every(
-          (condition) => (condition.where as Record<string, unknown>)[key] === value,
-        )
+    const commonConditions = new Map<string, unknown>(
+      firstCond
+        ? Object.entries(firstCond.where).filter(([key, value]) =>
+            conditions.every((condition) => (condition.where as Record<string, unknown>)[key] === value),
+          )
+        : [],
+    )
 
-        if (isCommonCondition) {
-          commonConditions.set(key, value)
-        }
-      })
-
-      // Create new conditions with common parts removed
-      varyingConditions.push(
-        ...conditions.map((condition) => {
-          const newWhere = { ...condition.where } as Record<string, unknown>
-          commonConditions.forEach((_, key) => {
-            delete newWhere[key]
-          })
-          return {
-            where: newWhere as WhereConditions<TableRow<T, DB>>,
-            is: condition.is,
-            wherein: condition.wherein,
-            not: condition.not,
-          }
-        }),
+    // Each branch with the common parts removed
+    const varyingConditions: ReadonlyArray<QueryCondition<TableRow<T, DB>>> = conditions.map((condition) => {
+      const newWhere = Object.fromEntries(
+        Object.entries(condition.where as Record<string, unknown>).filter(([key]) => !commonConditions.has(key)),
       )
-    }
+      return {
+        where: newWhere as WhereConditions<TableRow<T, DB>>,
+        is: condition.is,
+        wherein: condition.wherein,
+        not: condition.not,
+      }
+    })
 
     // Apply common conditions first
     const queryWithCommon = Array.from(commonConditions.entries()).reduce((query, [key, value]) => {
@@ -343,104 +330,47 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
     // Build OR conditions from the varying parts only
     const orConditions = varyingConditions
       .map((condition) => {
-        const parts: string[] = []
+        // Values are serialized to PostgREST filter strings here, so treat them as unknown: a
+        // column value can legitimately be null (IS NULL) at this boundary.
+        const entries = (record: object | undefined): ReadonlyArray<[string, unknown]> =>
+          record ? Object.entries(record) : []
+        const inList = (values: unknown): string | undefined =>
+          Array.isArray(values) && values.length > 0 ? values.map((v: unknown) => `"${v}"`).join(",") : undefined
 
-        // Add WHERE conditions (only the varying ones). Values are serialized to
-        // PostgREST filter strings here, so treat them as unknown — a column value
-        // can legitimately be null (IS NULL) at this boundary.
-        Object.entries(condition.where as Record<string, unknown>).forEach(([key, value]) => {
-          if (value === null) {
-            parts.push(`${key}.is.null`)
-          } else {
-            parts.push(`${key}.eq."${value}"`)
-          }
-        })
-
-        // Add IS conditions
-        if (condition.is) {
-          Object.entries(condition.is).forEach(([key, value]) => {
-            if (value === null) {
-              parts.push(`${key}.is.null`)
-            } else {
-              parts.push(`${key}.is.${value}`)
-            }
-          })
-        }
-
-        // Add WHERE IN conditions
-        if (condition.wherein) {
-          Object.entries(condition.wherein).forEach(([key, values]) => {
-            if (values && Array.isArray(values) && values.length > 0) {
-              const valueList = values.map((v: unknown) => `"${v}"`).join(",")
-              parts.push(`${key}.in.(${valueList})`)
-            }
-          })
-        }
-
-        // Add comparison operators
-        if (condition.gt) {
-          Object.entries(condition.gt).forEach(([key, value]) => {
-            parts.push(`${key}.gt.${value}`)
-          })
-        }
-        if (condition.gte) {
-          Object.entries(condition.gte).forEach(([key, value]) => {
-            parts.push(`${key}.gte.${value}`)
-          })
-        }
-        if (condition.lt) {
-          Object.entries(condition.lt).forEach(([key, value]) => {
-            parts.push(`${key}.lt.${value}`)
-          })
-        }
-        if (condition.lte) {
-          Object.entries(condition.lte).forEach(([key, value]) => {
-            parts.push(`${key}.lte.${value}`)
-          })
-        }
-        if (condition.neq) {
-          Object.entries(condition.neq).forEach(([key, value]) => {
-            if (value === null) {
-              log.warn(`neq: null is deprecated. Use not: { is: { ${key}: null } } for IS NOT NULL`)
-              parts.push(`${key}.not.is.null`)
-            } else {
-              parts.push(`${key}.neq."${value}"`)
-            }
-          })
-        }
-
-        // Add pattern matching
-        if (condition.like) {
-          Object.entries(condition.like).forEach(([key, pattern]) => {
-            parts.push(`${key}.like."${pattern}"`)
-          })
-        }
-        if (condition.ilike) {
-          Object.entries(condition.ilike).forEach(([key, pattern]) => {
-            parts.push(`${key}.ilike."${pattern}"`)
-          })
-        }
-
-        // Add NOT conditions (IS NOT NULL, NOT IN)
-        if (condition.not) {
-          if (condition.not.is) {
-            Object.entries(condition.not.is).forEach(([key, value]) => {
-              if (value === null) {
-                parts.push(`${key}.not.is.null`)
-              } else {
-                parts.push(`${key}.not.is.${value}`)
-              }
-            })
-          }
-          if (condition.not.in) {
-            Object.entries(condition.not.in).forEach(([key, values]) => {
-              if (values && Array.isArray(values) && values.length > 0) {
-                const valueList = values.map((v: unknown) => `"${v}"`).join(",")
-                parts.push(`${key}.not.in.(${valueList})`)
-              }
-            })
-          }
-        }
+        const parts: ReadonlyArray<string> = [
+          // WHERE conditions (only the varying ones)
+          ...entries(condition.where).map(([key, value]) =>
+            value === null ? `${key}.is.null` : `${key}.eq."${value}"`,
+          ),
+          // IS conditions
+          ...entries(condition.is).map(([key, value]) => (value === null ? `${key}.is.null` : `${key}.is.${value}`)),
+          // WHERE IN conditions
+          ...entries(condition.wherein).flatMap(([key, values]) => {
+            const valueList = inList(values)
+            return valueList === undefined ? [] : [`${key}.in.(${valueList})`]
+          }),
+          // Comparison operators
+          ...entries(condition.gt).map(([key, value]) => `${key}.gt.${value}`),
+          ...entries(condition.gte).map(([key, value]) => `${key}.gte.${value}`),
+          ...entries(condition.lt).map(([key, value]) => `${key}.lt.${value}`),
+          ...entries(condition.lte).map(([key, value]) => `${key}.lte.${value}`),
+          ...entries(condition.neq).map(([key, value]) => {
+            if (value !== null) return `${key}.neq."${value}"`
+            log.warn(`neq: null is deprecated. Use not: { is: { ${key}: null } } for IS NOT NULL`)
+            return `${key}.not.is.null`
+          }),
+          // Pattern matching
+          ...entries(condition.like).map(([key, pattern]) => `${key}.like."${pattern}"`),
+          ...entries(condition.ilike).map(([key, pattern]) => `${key}.ilike."${pattern}"`),
+          // NOT conditions (IS NOT NULL, NOT IN)
+          ...entries(condition.not?.is).map(([key, value]) =>
+            value === null ? `${key}.not.is.null` : `${key}.not.is.${value}`,
+          ),
+          ...entries(condition.not?.in).flatMap(([key, values]) => {
+            const valueList = inList(values)
+            return valueList === undefined ? [] : [`${key}.not.in.(${valueList})`]
+          }),
+        ]
 
         return parts.join(",")
       })
@@ -602,7 +532,7 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
         const query = buildSupabaseQuery()
         const { data, error } = await query
         if (error) throw toError(error)
-        const rawResults = data as Row[]
+        const rawResults = data as ReadonlyArray<Row>
         const results = config.filterFn ? rawResults.filter(config.filterFn) : rawResults
         return List(results)
       }, toError).tapError((err) => log.error(`Error getting ${config.table} items: ${err}`))
@@ -614,7 +544,7 @@ export const QueryBuilder = <T extends TableNames<DB>, DB extends DatabaseSchema
     first: (): Task<Error, Option<Row>> => {
       return QueryBuilder<T, DB>(client, config)
         .many()
-        .map((list) => (list.isEmpty ? Option.none<Row>() : Option(list.head)))
+        .map((list) => list.headOption())
     },
 
     /**
@@ -660,26 +590,22 @@ const createMappedQuery = <T extends TableNames<DB>, DB extends DatabaseSchema =
       return createMappedQuery<T, DB, U>(filteredQuery, mapFn)
     },
 
+    // The mapper is the caller's code: run it as a typed step, so a throw in it is a Left from
+    // run(), as on functype 1. Inside a plain IO.map, functype 2 makes it a defect that rejects run().
     one: (): Task<Error, Option<U>> => {
-      return sourceQuery.one().map((maybeItem) =>
-        maybeItem.fold(
-          () => Option.none<U>(),
-          (item) => Option(mapFn(item)),
-        ),
-      )
+      return sourceQuery
+        .one()
+        .flatMap((maybeItem) => IO.tryCatch(() => maybeItem.flatMap((item) => Option(mapFn(item))), toError))
     },
 
     many: (): Task<Error, List<U>> => {
-      return sourceQuery.many().map((items) => items.map(mapFn))
+      return sourceQuery.many().flatMap((items) => IO.tryCatch(() => items.map(mapFn), toError))
     },
 
     first: (): Task<Error, Option<U>> => {
-      return sourceQuery.first().map((maybeItem) =>
-        maybeItem.fold(
-          () => Option.none<U>(),
-          (item) => Option(mapFn(item)),
-        ),
-      )
+      return sourceQuery
+        .first()
+        .flatMap((maybeItem) => IO.tryCatch(() => maybeItem.flatMap((item) => Option(mapFn(item))), toError))
     },
 
     /**
@@ -715,7 +641,7 @@ export const createQuery = <T extends TableNames<DB>, DB extends DatabaseSchema 
   table: T,
   where: WhereConditions<TableRow<T, DB>> = {},
   is?: IsConditions<TableRow<T, DB>>,
-  wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
+  wherein?: Partial<Record<keyof TableRow<T, DB>, ReadonlyArray<unknown>>>,
   order?: [keyof TableRow<T, DB> & string, { ascending?: boolean; nullsFirst?: boolean }],
   softDeleteConfig?: { mode?: "include" | "exclude" | "only"; appliedByDefault?: boolean },
   schema?: string,
@@ -730,7 +656,7 @@ export const createQuery = <T extends TableNames<DB>, DB extends DatabaseSchema 
   },
   not?: {
     is?: Partial<Record<keyof TableRow<T, DB>, null | boolean>>
-    in?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>
+    in?: Partial<Record<keyof TableRow<T, DB>, ReadonlyArray<unknown>>>
   },
 ): Query<TableRow<T, DB>> => {
   const config: QueryBuilderConfig<TableRow<T, DB>> = {

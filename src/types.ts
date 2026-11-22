@@ -309,7 +309,7 @@ export interface QueryBuilder extends Promise<{ data: unknown; error: unknown }>
   like: (column: string, pattern: string) => QueryBuilder
   ilike: (column: string, pattern: string) => QueryBuilder
   is: (column: string, value: boolean | null) => QueryBuilder
-  in: (column: string, values: unknown[]) => QueryBuilder
+  in: (column: string, values: ReadonlyArray<unknown>) => QueryBuilder
   or: (filters: string) => QueryBuilder
   single: () => QueryBuilder
   limit: (count: number) => QueryBuilder

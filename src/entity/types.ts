@@ -77,7 +77,7 @@ export type IsParams<T extends object = EmptyObject> = {
 }
 
 export type WhereinParams<T extends object = EmptyObject> = {
-  wherein?: TypedRecord<T, unknown[]>
+  wherein?: TypedRecord<T, ReadonlyArray<unknown>>
 }
 
 export type OrderParams<T extends object = EmptyObject> = {
@@ -107,7 +107,7 @@ export type ComparisonParams<T extends object = EmptyObject> = {
 export type NotParams<T extends object = EmptyObject> = {
   not?: {
     is?: TypedRecord<T, null | boolean> // NOT IS NULL, NOT IS TRUE, NOT IS FALSE
-    in?: TypedRecord<T, unknown[]> // NOT IN array
+    in?: TypedRecord<T, ReadonlyArray<unknown>> // NOT IN array
   }
 }
 
@@ -135,7 +135,7 @@ export type AddItemsParams<
   DB extends DatabaseSchema = Database,
   S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
 > = {
-  items: TableInsert<T, DB, S>[]
+  items: ReadonlyArray<TableInsert<T, DB, S>>
 }
 
 /**
@@ -180,9 +180,9 @@ export type UpsertItemsParams<
   S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
 > = {
   /** Array of items to upsert, each with its own data */
-  items: TableUpdate<T, DB, S>[]
+  items: ReadonlyArray<TableUpdate<T, DB, S>>
   /** Column(s) to use as identity for matching (default: "id") */
-  identity?: (keyof Row & string) | (keyof Row & string)[]
+  identity?: (keyof Row & string) | ReadonlyArray<keyof Row & string>
 }
 
 /**

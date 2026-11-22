@@ -1,3 +1,18 @@
+# Migration Guide: functype 2.0
+
+## Version: 2.0.0 (Breaking)
+
+### Summary
+
+supabase-typed-query 2.0 runs on functype 2.0 and needs it: the `functype` peer dependency is now `^2.0.0`. Stay on 1.x while your code is on functype 1.x.
+
+1. **functype 2.0.** Upgrade functype with [its guide](https://functype.org/upgrading-to-2). On functype 2, `List.head` is a method, so 1.3.1's `first()` and `firstOrThrow()` returned the method instead of the first row. 2.0.0 reads it with `headOption()`.
+2. **Array types are `ReadonlyArray`.** `items`, `identity`, `wherein`, `not.in` and `ComparisonOperators.in` take `ReadonlyArray`. A mutable array still passes, so most callers need no change. Code that mutates a value typed with these types, or with `QueryBuilderConfig.conditions`, no longer compiles (`cfg.conditions.push(...)`: build a new array instead). A mock of the exported `QueryBuilder` interface needs `in: (column: string, values: ReadonlyArray<unknown>) => ...`.
+3. **A throwing `.map()` callback is still a `Left`.** On functype 2 a throw inside a plain `IO.map` rejects `run()`. 2.0.0 runs your mapper as a typed step, so `query(...).map(fn).one().run()` resolves to `Left(error)` when `fn` throws, as it did on 1.x.
+4. **The `functype` peer range is `^2.0.0`.** It no longer admits a future major.
+
+---
+
 # Migration Guide: Mutation API Changes
 
 ## Version: 1.2.0 (Breaking)

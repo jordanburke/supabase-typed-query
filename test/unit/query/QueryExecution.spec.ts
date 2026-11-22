@@ -141,7 +141,7 @@ describe("Query Execution Methods", () => {
 
       expect(result.isRight()).toBe(true)
       const optionResult = result.orThrow()
-      expect(optionResult.isSome()).toBe(true)
+      expect(optionResult.orUndefined()).toEqual({ id: "1", name: "User 1" })
     })
 
     it("should return empty Option when no results", async () => {

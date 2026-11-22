@@ -96,7 +96,7 @@ export const getEntities = <T extends TableNames<DB>, DB extends DatabaseSchema 
   table: T,
   where: EntityWhereConditions<TableRow<T, DB>> = {},
   is?: IsConditionsLocal<TableRow<T, DB>>,
-  wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
+  wherein?: Partial<Record<keyof TableRow<T, DB>, ReadonlyArray<unknown>>>,
   order: [keyof TableRow<T, DB> & string, { ascending?: boolean; nullsFirst?: boolean }] = [
     "id" as keyof TableRow<T, DB> & string,
     { ascending: true },
@@ -124,7 +124,7 @@ export const getEntities = <T extends TableNames<DB>, DB extends DatabaseSchema 
 
     const { data, error } = await queryOrderBy
     if (error) throw toError(error)
-    return List(data as TableRow<T, DB>[])
+    return List(data as ReadonlyArray<TableRow<T, DB>>)
   }, toError)
 
 /**
@@ -140,7 +140,7 @@ export const getEntities = <T extends TableNames<DB>, DB extends DatabaseSchema 
 export const addEntities = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
   table: T,
-  entities: TableInsert<T, DB>[],
+  entities: ReadonlyArray<TableInsert<T, DB>>,
   schema?: string,
 ): Task<Error, List<TableRow<T, DB>>> =>
   IO.tryAsync<List<TableRow<T, DB>>, Error>(async () => {
@@ -148,7 +148,7 @@ export const addEntities = <T extends TableNames<DB>, DB extends DatabaseSchema 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (tableQuery as any).insert(entities as never).select()
     if (error) throw toError(error)
-    return List(data as unknown as TableRow<T, DB>[])
+    return List(data as unknown as ReadonlyArray<TableRow<T, DB>>)
   }, toError)
 
 /**
@@ -170,7 +170,7 @@ export const updateEntity = <T extends TableNames<DB>, DB extends DatabaseSchema
   entities: TableUpdate<T, DB>,
   where: EntityWhereConditions<TableRow<T, DB>>,
   is?: IsConditionsLocal<TableRow<T, DB>>,
-  wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
+  wherein?: Partial<Record<keyof TableRow<T, DB>, ReadonlyArray<unknown>>>,
   schema?: string,
 ): Task<Error, TableRow<T, DB>> =>
   IO.tryAsync<TableRow<T, DB>, Error>(async () => {
@@ -213,12 +213,15 @@ export const updateEntity = <T extends TableNames<DB>, DB extends DatabaseSchema
 export const upsertEntities = <T extends TableNames<DB>, DB extends DatabaseSchema = Database>(
   client: SupabaseClientType<DB>,
   table: T,
-  entities: TableUpdate<T, DB>[],
-  identity: (keyof TableRow<T, DB> & string) | (keyof TableRow<T, DB> & string)[] = "id" as keyof TableRow<T, DB> &
+  entities: ReadonlyArray<TableUpdate<T, DB>>,
+  identity: (keyof TableRow<T, DB> & string) | ReadonlyArray<keyof TableRow<T, DB> & string> = "id" as keyof TableRow<
+    T,
+    DB
+  > &
     string,
   where?: EntityWhereConditions<TableRow<T, DB>>,
   is?: IsConditionsLocal<TableRow<T, DB>>,
-  wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
+  wherein?: Partial<Record<keyof TableRow<T, DB>, ReadonlyArray<unknown>>>,
   schema?: string,
 ): Task<Error, List<TableRow<T, DB>>> =>
   IO.tryAsync<List<TableRow<T, DB>>, Error>(async () => {
@@ -242,7 +245,7 @@ export const upsertEntities = <T extends TableNames<DB>, DB extends DatabaseSche
 
     const { data, error } = await queryWithIs.select()
     if (error) throw toError(error)
-    return List(data as TableRow<T, DB>[])
+    return List(data as ReadonlyArray<TableRow<T, DB>>)
   }, toError)
 
 /**
@@ -262,7 +265,7 @@ export const deleteEntity = <T extends TableNames<DB>, DB extends DatabaseSchema
   table: T,
   where: EntityWhereConditions<TableRow<T, DB>>,
   is?: IsConditionsLocal<TableRow<T, DB>>,
-  wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
+  wherein?: Partial<Record<keyof TableRow<T, DB>, ReadonlyArray<unknown>>>,
   schema?: string,
 ): Task<Error, TableRow<T, DB>> =>
   IO.tryAsync<TableRow<T, DB>, Error>(async () => {
@@ -304,7 +307,7 @@ export const deleteEntities = <T extends TableNames<DB>, DB extends DatabaseSche
   table: T,
   where: EntityWhereConditions<TableRow<T, DB>>,
   is?: IsConditionsLocal<TableRow<T, DB>>,
-  wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
+  wherein?: Partial<Record<keyof TableRow<T, DB>, ReadonlyArray<unknown>>>,
   schema?: string,
 ): Task<Error, List<TableRow<T, DB>>> =>
   IO.tryAsync<List<TableRow<T, DB>>, Error>(async () => {
@@ -326,7 +329,7 @@ export const deleteEntities = <T extends TableNames<DB>, DB extends DatabaseSche
 
     const { data, error } = await queryWithIs.select()
     if (error) throw toError(error)
-    return List(data as TableRow<T, DB>[])
+    return List(data as ReadonlyArray<TableRow<T, DB>>)
   }, toError)
 
 /**
@@ -346,7 +349,7 @@ export const softDeleteEntity = <T extends TableNames<DB>, DB extends DatabaseSc
   table: T,
   where: EntityWhereConditions<TableRow<T, DB>>,
   is?: IsConditionsLocal<TableRow<T, DB>>,
-  wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
+  wherein?: Partial<Record<keyof TableRow<T, DB>, ReadonlyArray<unknown>>>,
   schema?: string,
 ): Task<Error, TableRow<T, DB>> =>
   IO.tryAsync<TableRow<T, DB>, Error>(async () => {
@@ -388,7 +391,7 @@ export const softDeleteEntities = <T extends TableNames<DB>, DB extends Database
   table: T,
   where: EntityWhereConditions<TableRow<T, DB>>,
   is?: IsConditionsLocal<TableRow<T, DB>>,
-  wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
+  wherein?: Partial<Record<keyof TableRow<T, DB>, ReadonlyArray<unknown>>>,
   schema?: string,
 ): Task<Error, List<TableRow<T, DB>>> =>
   IO.tryAsync<List<TableRow<T, DB>>, Error>(async () => {
@@ -410,7 +413,7 @@ export const softDeleteEntities = <T extends TableNames<DB>, DB extends Database
 
     const { data, error } = await queryWithIs.select()
     if (error) throw toError(error)
-    return List(data as TableRow<T, DB>[])
+    return List(data as ReadonlyArray<TableRow<T, DB>>)
   }, toError)
 
 /**
@@ -454,7 +457,7 @@ export const query = <T extends TableNames<DB>, DB extends DatabaseSchema = Data
   table: T,
   where: WhereConditions<TableRow<T, DB>> = {},
   is?: IsConditionsLocal<TableRow<T, DB>>,
-  wherein?: Partial<Record<keyof TableRow<T, DB>, unknown[]>>,
+  wherein?: Partial<Record<keyof TableRow<T, DB>, ReadonlyArray<unknown>>>,
   order?: [keyof TableRow<T, DB> & string, { ascending?: boolean; nullsFirst?: boolean }],
   schema?: string,
 ): Query<TableRow<T, DB>> => {
