@@ -301,20 +301,20 @@ const allPosts = await GlobalPostEntity.getItems().many()
 
 ### Error Handling
 
-The library uses functype's `TaskOutcome` for error handling:
+`one()`, `many()` and `first()` return a lazy functype `IO`. Call `.run()` to execute it; it resolves to an `Either` with the error on the left:
 
 ```typescript
-// Using TaskOutcome (recommended for explicit error handling)
-const result = await query(supabase, "users", { id: userId }).one()
+// Explicit error handling
+const result = await query(supabase, "users", { id: userId }).one().run()
 
-if (result.isOk()) {
-  const maybeUser = result.getOrThrow()
-  if (maybeUser.isSome()) {
-    console.log("User found:", maybeUser.getOrThrow())
-  }
-} else {
-  console.error("Query failed:", result.error)
-}
+result.fold(
+  (error) => console.error("Query failed:", error),
+  (maybeUser) =>
+    maybeUser.fold(
+      () => console.log("No such user"),
+      (user) => console.log("User found:", user),
+    ),
+)
 
 // Using OrThrow methods (simpler but throws errors)
 try {

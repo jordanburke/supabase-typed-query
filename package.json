@@ -69,7 +69,7 @@
   },
   "peerDependencies": {
     "@supabase/supabase-js": "^2.0.0",
-    "functype": ">=2.0.0"
+    "functype": "^2.0.0"
   },
   "peerDependenciesMeta": {
     "@supabase/supabase-js": {
