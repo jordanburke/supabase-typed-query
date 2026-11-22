@@ -189,7 +189,7 @@ export const rpc = <
 
       // Handle array data
       if (Array.isArray(data)) {
-        return List(data as ReturnType[])
+        return List(data as ReadonlyArray<ReturnType>)
       }
 
       // Single value - wrap in list

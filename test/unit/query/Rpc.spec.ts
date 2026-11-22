@@ -15,7 +15,7 @@ describe("RPC (Remote Procedure Call)", () => {
       expect(result.isRight()).toBe(true)
       const optionResult = result.orThrow()
       expect(optionResult.isSome()).toBe(true)
-      expect(optionResult.orElse(null)).toEqual(mockData)
+      expect(optionResult.orNull()).toEqual(mockData)
     })
 
     it("should return first element when data is an array", async () => {
@@ -30,7 +30,7 @@ describe("RPC (Remote Procedure Call)", () => {
       expect(result.isRight()).toBe(true)
       const optionResult = result.orThrow()
       expect(optionResult.isSome()).toBe(true)
-      expect(optionResult.orElse(null)).toEqual({ id: "1", name: "Result 1" })
+      expect(optionResult.orNull()).toEqual({ id: "1", name: "Result 1" })
     })
 
     it("should return empty Option when no data returned", async () => {
@@ -119,7 +119,7 @@ describe("RPC (Remote Procedure Call)", () => {
       expect(result.isRight()).toBe(true)
       const list = result.orThrow()
       expect(list.length).toBe(1)
-      expect(list.head).toEqual(mockData)
+      expect(list.headOption().orUndefined()).toEqual(mockData)
     })
 
     it("should return empty List when no data returned", async () => {

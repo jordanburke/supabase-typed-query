@@ -39,11 +39,12 @@ export class SupabaseError extends Error {
    * Override toString to include all error details
    */
   override toString(): string {
-    const parts = [this.message]
-    if (this.code) parts.push(`[Code: ${this.code}]`)
-    if (this.details) parts.push(`Details: ${this.details}`)
-    if (this.hint) parts.push(`Hint: ${this.hint}`)
-    return parts.join(" | ")
+    return [
+      this.message,
+      ...(this.code ? [`[Code: ${this.code}]`] : []),
+      ...(this.details ? [`Details: ${this.details}`] : []),
+      ...(this.hint ? [`Hint: ${this.hint}`] : []),
+    ].join(" | ")
   }
 }
 

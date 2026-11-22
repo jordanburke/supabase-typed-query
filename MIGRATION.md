@@ -1,3 +1,16 @@
+# Migration Guide: functype 2.0
+
+## Version: 2.0.0 (Breaking)
+
+### Summary
+
+supabase-typed-query 2.0 runs on functype 2.0 and needs it: the `functype` peer dependency is now `>=2.0.0`. Stay on 1.x while your code is on functype 1.x.
+
+1. **functype 2.0.** Upgrade functype with [its guide](https://functype.org/upgrading-to-2). On functype 2, `List.head` is a method, so 1.3.1's `first()` and `firstOrThrow()` returned the method instead of the first row. 2.0.0 reads it with `headOption()`.
+2. **Array parameters are `ReadonlyArray`.** `items`, `identity`, `wherein` and `not.in` take `ReadonlyArray`. A mutable array still passes, so callers need no change; code that typed its own variables with these parameter types may need `ReadonlyArray` too.
+
+---
+
 # Migration Guide: Mutation API Changes
 
 ## Version: 1.2.0 (Breaking)

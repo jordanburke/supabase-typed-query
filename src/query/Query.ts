@@ -11,7 +11,7 @@ export type ComparisonOperators<V> = {
   neq?: V // Not equal
   like?: string // LIKE pattern (for string fields)
   ilike?: string // Case-insensitive LIKE
-  in?: V[] // IN array
+  in?: ReadonlyArray<V> // IN array
   is?: null | boolean // IS NULL/TRUE/FALSE
 }
 
@@ -52,7 +52,7 @@ export type IsConditions<T extends object = EmptyObject> = Partial<Record<keyof 
 // NOT conditions for negating IS and IN operations (follows Supabase .not() pattern)
 export type NotConditions<T extends object = EmptyObject> = {
   is?: Partial<Record<keyof T, null | boolean>> // NOT IS NULL, NOT IS TRUE, NOT IS FALSE
-  in?: Partial<Record<keyof T, unknown[]>> // NOT IN array
+  in?: Partial<Record<keyof T, ReadonlyArray<unknown>>> // NOT IN array
 }
 
 // Soft delete mode for controlling how deleted records are handled
@@ -137,7 +137,7 @@ export interface MappedQuery<U> {
 export interface QueryCondition<Row extends object> {
   where: WhereConditions<Row>
   is?: IsConditions<Row>
-  wherein?: Partial<Record<keyof Row, unknown[]>>
+  wherein?: Partial<Record<keyof Row, ReadonlyArray<unknown>>>
   // Comparison operators
   gt?: Partial<Record<keyof Row, number | string | Date>>
   gte?: Partial<Record<keyof Row, number | string | Date>>
@@ -218,7 +218,7 @@ export const isMappedQuery = <U>(obj: unknown): obj is MappedQuery<U> => {
  */
 export type QueryWhereParams<Row extends object> = WhereConditions<Row>
 export type QueryIsParams<Row extends object> = IsConditions<Row>
-export type QueryWhereinParams<Row extends object> = Partial<Record<keyof Row, unknown[]>>
+export type QueryWhereinParams<Row extends object> = Partial<Record<keyof Row, ReadonlyArray<unknown>>>
 export type QueryOrderParams<Row extends object> = [keyof Row & string, { ascending?: boolean; nullsFirst?: boolean }]
 
 // =============================================================================
@@ -233,7 +233,7 @@ export type QueryOrderParams<Row extends object> = [keyof Row & string, { ascend
  */
 export interface QueryBuilderConfig<Row extends object> {
   table: string
-  conditions: QueryCondition<Row>[]
+  conditions: ReadonlyArray<QueryCondition<Row>>
   order?: QueryOrderParams<Row>
   mapFn?: (item: Row) => unknown
   filterFn?: (item: Row) => boolean

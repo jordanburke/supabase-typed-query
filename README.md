@@ -30,7 +30,7 @@ yarn add supabase-typed-query functype
 | Dependency              | Version    | Notes                               |
 | ----------------------- | ---------- | ----------------------------------- |
 | `@supabase/supabase-js` | `^2.0.0`   | Tested with 2.108.x                 |
-| `functype`              | `>=1.4.1`  | Required for error handling         |
+| `functype`              | `>=2.0.0`  | Required for error handling         |
 | TypeScript              | `>=5.0`    | Recommended for best type inference |
 | Node.js                 | `>=22 <25` | Required                            |
 
@@ -403,7 +403,7 @@ const posts = await query(supabase, "posts", {
 
 - TypeScript 5.0+
 - Supabase JS Client v2
-- functype 1.4.1+
+- functype 2.0.0+ (use supabase-typed-query 1.x with functype 1.x)
 
 ## License
 

@@ -129,7 +129,7 @@ export function createGetItemsQuery<
   name: T,
   whereConditions: WhereConditions<TableRow<T, DB, S>>,
   is: TypedRecord<TableRow<T, DB, S>, null | boolean> | undefined,
-  wherein: TypedRecord<TableRow<T, DB, S>, unknown[]> | undefined,
+  wherein: TypedRecord<TableRow<T, DB, S>, ReadonlyArray<unknown>> | undefined,
   order: GetItemsParams<TableRow<T, DB, S>>["order"],
   softDeleteMode: SoftDeleteMode,
   schema?: string,
@@ -144,7 +144,7 @@ export function createGetItemsQuery<
   },
   not?: {
     is?: TypedRecord<TableRow<T, DB, S>, null | boolean>
-    in?: TypedRecord<TableRow<T, DB, S>, unknown[]>
+    in?: TypedRecord<TableRow<T, DB, S>, ReadonlyArray<unknown>>
   },
 ): Query<TableRow<T, DB, S>> {
   return createQuery(
@@ -152,7 +152,7 @@ export function createGetItemsQuery<
     name,
     whereConditions as WhereConditions<TableRow<T, DB>>,
     is as TypedRecord<TableRow<T, DB>, null | boolean> | undefined,
-    wherein as TypedRecord<TableRow<T, DB>, unknown[]> | undefined,
+    wherein as TypedRecord<TableRow<T, DB>, ReadonlyArray<unknown>> | undefined,
     order as GetItemsParams<TableRow<T, DB>>["order"],
     {
       mode: softDeleteMode,
@@ -170,7 +170,7 @@ export function createGetItemsQuery<
     },
     not as {
       is?: TypedRecord<TableRow<T, DB>, null | boolean>
-      in?: TypedRecord<TableRow<T, DB>, unknown[]>
+      in?: TypedRecord<TableRow<T, DB>, ReadonlyArray<unknown>>
     },
   ) as unknown as Query<TableRow<T, DB, S>>
 }
@@ -189,11 +189,14 @@ export function createAddItemsMutation<
 >(
   client: SupabaseClientType<DB>,
   name: T,
-  items: TableRow<T, DB, S>[],
+  items: ReadonlyArray<TableRow<T, DB, S>>,
   schema?: string,
 ): MutationMultiExecution<TableRow<T, DB, S>> {
   return MultiMutationQuery(
-    addEntities<T, DB>(client, name, items as TableRow<T, DB>[], schema) as Task<Error, List<TableRow<T, DB, S>>>,
+    addEntities<T, DB>(client, name, items as ReadonlyArray<TableRow<T, DB>>, schema) as Task<
+      Error,
+      List<TableRow<T, DB, S>>
+    >,
   )
 }
 
@@ -247,7 +250,7 @@ export function createUpdateItemsMutation<
     upsertEntities<T, DB>(
       client,
       name,
-      [data] as TableUpdate<T, DB>[],
+      [data] as ReadonlyArray<TableUpdate<T, DB>>,
       undefined,
       where as WhereConditions<TableRow<T, DB>>,
       is as IsParams<TableRow<T, DB>>["is"],
@@ -267,16 +270,16 @@ export function createUpsertItemsMutation<
 >(
   client: SupabaseClientType<DB>,
   name: T,
-  items: TableUpdate<T, DB, S>[],
-  identity: (keyof TableRow<T, DB, S> & string) | (keyof TableRow<T, DB, S> & string)[],
+  items: ReadonlyArray<TableUpdate<T, DB, S>>,
+  identity: (keyof TableRow<T, DB, S> & string) | ReadonlyArray<keyof TableRow<T, DB, S> & string>,
   schema?: string,
 ): MutationMultiExecution<TableRow<T, DB, S>> {
   return MultiMutationQuery(
     upsertEntities<T, DB>(
       client,
       name,
-      items as TableUpdate<T, DB>[],
-      identity as (keyof TableRow<T, DB> & string) | (keyof TableRow<T, DB> & string)[],
+      items as ReadonlyArray<TableUpdate<T, DB>>,
+      identity as (keyof TableRow<T, DB> & string) | ReadonlyArray<keyof TableRow<T, DB> & string>,
       undefined,
       undefined,
       undefined,
@@ -521,7 +524,7 @@ export function makeAddItems<
   DB extends DatabaseSchema = Database,
   S extends SchemaNames<DB> = "public" & SchemaNames<DB>,
 >(client: SupabaseClientType<DB>, name: T, schema?: string) {
-  return function addItems({ items }: { items: TableRow<T, DB, S>[] }) {
+  return function addItems({ items }: { items: ReadonlyArray<TableRow<T, DB, S>> }) {
     return createAddItemsMutation<T, DB, S>(client, name, items, schema)
   }
 }
@@ -902,7 +905,7 @@ function createViewGetItemsQuery<
   name: V,
   where: WhereConditions<ViewRow<V, DB, S>> | undefined,
   is: TypedRecord<ViewRow<V, DB, S>, null | boolean> | undefined,
-  wherein: TypedRecord<ViewRow<V, DB, S>, unknown[]> | undefined,
+  wherein: TypedRecord<ViewRow<V, DB, S>, ReadonlyArray<unknown>> | undefined,
   order: [keyof ViewRow<V, DB, S> & string, { ascending?: boolean; nullsFirst?: boolean }] | undefined,
   schema: string | undefined,
   comparison: {
@@ -916,7 +919,7 @@ function createViewGetItemsQuery<
   },
   not?: {
     is?: TypedRecord<ViewRow<V, DB, S>, null | boolean>
-    in?: TypedRecord<ViewRow<V, DB, S>, unknown[]>
+    in?: TypedRecord<ViewRow<V, DB, S>, ReadonlyArray<unknown>>
   },
 ): Query<ViewRow<V, DB, S>> {
   // Views work identically to tables at runtime - only the type constraints differ
